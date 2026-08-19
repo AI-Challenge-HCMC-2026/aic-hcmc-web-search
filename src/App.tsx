@@ -1,122 +1,87 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect } from 'react';
+import LoginPage from './pages/login';
+import { DashboardLayout } from './components/layout/DashboardLayout';
+import SettingsPage from './pages/dashboard/settings';
+import ChatsPage from './pages/dashboard/chats';
+import McpToolsPage from './pages/dashboard/mcp-tools';
+import ApiDocsPage from './pages/dashboard/api-docs';
+
+type AppRoute = 'login' | 'dashboard';
+type DashboardTab = 'chats' | 'mcp-tools' | 'api-docs' | 'settings';
 
 function App() {
-  const [count, setCount] = useState(0)
+  // Parse initial route and tab from window.location.hash
+  const [currentRoute, setCurrentRoute] = useState<AppRoute>(() => {
+    if (window.location.hash.startsWith('#/dashboard')) {
+      return 'dashboard';
+    }
+    return 'dashboard'; // Default to authenticated dashboard for direct preview
+  });
 
+  const [activeTab, setActiveTab] = useState<DashboardTab>(() => {
+    const hash = window.location.hash;
+    if (hash === '#/dashboard/chats') return 'chats';
+    if (hash === '#/dashboard/mcp-tools') return 'mcp-tools';
+    if (hash === '#/dashboard/api-docs') return 'api-docs';
+    return 'settings'; // Default to settings as shown in reference UI
+  });
+
+  // Sync state when browser back/forward or hash changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#/dashboard')) {
+        setCurrentRoute('dashboard');
+        if (hash === '#/dashboard/chats') setActiveTab('chats');
+        else if (hash === '#/dashboard/mcp-tools') setActiveTab('mcp-tools');
+        else if (hash === '#/dashboard/api-docs') setActiveTab('api-docs');
+        else setActiveTab('settings');
+      } else if (hash === '#/login') {
+        setCurrentRoute('login');
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleSelectTab = (tabId: string) => {
+    const tab = tabId as DashboardTab;
+    setActiveTab(tab);
+    window.location.hash = `#/dashboard/${tab}`;
+  };
+
+  const handleLoginSuccess = () => {
+    setCurrentRoute('dashboard');
+    setActiveTab('settings');
+    window.location.hash = '#/dashboard/settings';
+  };
+
+  const handleLogout = () => {
+    setCurrentRoute('login');
+    window.location.hash = '#/login';
+  };
+
+  // Render Login Page View
+  if (currentRoute === 'login') {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  // Render Authenticated Dashboard Layout
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <DashboardLayout
+      activeTab={activeTab}
+      onSelectTab={handleSelectTab}
+      onLogout={handleLogout}
+      userName="Phú Nguyễn"
+      userPlan="Free Plan"
+    >
+      {activeTab === 'settings' && <SettingsPage />}
+      {activeTab === 'chats' && <ChatsPage />}
+      {activeTab === 'mcp-tools' && <McpToolsPage />}
+      {activeTab === 'api-docs' && <ApiDocsPage />}
+    </DashboardLayout>
+  );
 }
 
-export default App
+export default App;
