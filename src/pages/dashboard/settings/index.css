@@ -1,0 +1,105 @@
+/* ==========================================================================
+   Dashboard Settings Styles — Claude Dark Aesthetic
+   ========================================================================== */
+
+.settings-container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 44px 28px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ─── Page Header ─── */
+.settings-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-title {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+}
+
+.settings-subtitle {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+/* ─── Section Card ─── */
+.settings-card {
+  background-color: var(--bg-surface-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.settings-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 14px;
+}
+
+.settings-card-title {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.settings-card-desc {
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+}
+
+/* ─── Form Group & Divider ─── */
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.settings-divider {
+  height: 1px;
+  background-color: var(--border-subtle);
+  width: 100%;
+}
+
+/* ─── Actions & Toast ─── */
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 14px;
+}
+
+.toast-saved {
+  font-size: 13px;
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: fadeIn 0.2s var(--ease-spring);
+}
+
+@media (max-width: 640px) {
+  .settings-container {
+    padding: 24px 16px 48px;
+  }
+  .settings-card {
+    padding: 18px 16px;
+  }
+}
