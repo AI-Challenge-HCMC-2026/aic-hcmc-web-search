@@ -58,6 +58,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ),
     },
     {
+      id: 'dataset',
+      label: 'Dataset',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <ellipse cx="12" cy="5" rx="8" ry="3" />
+          <path d="M4 5v7c0 1.66 3.58 3 8 3s8-1.34 8-3V5" />
+          <path d="M4 12v7c0 1.66 3.58 3 8 3s8-1.34 8-3v-7" />
+        </svg>
+      ),
+    },
+    {
       id: 'settings',
       label: 'Settings',
       icon: (
@@ -194,7 +205,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 padding: '8px 12px',
                 borderRadius: 'var(--radius-sm)',
                 backgroundColor: isActive
-                  ? 'var(--bg-surface-active)'
+                  ? item.id === 'dataset' ? 'var(--bg-surface-elevated)' : 'var(--bg-surface-active)'
                   : isHovered
                   ? 'var(--bg-surface-subtle)'
                   : 'transparent',

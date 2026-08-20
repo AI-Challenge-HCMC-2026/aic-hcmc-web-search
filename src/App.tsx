@@ -5,9 +5,20 @@ import SettingsPage from './pages/dashboard/settings';
 import ChatsPage from './pages/dashboard/chats';
 import McpToolsPage from './pages/dashboard/mcp-tools';
 import ApiDocsPage from './pages/dashboard/api-docs';
+import DatasetPage from './pages/dashboard/dataset';
 
 type AppRoute = 'login' | 'dashboard';
-type DashboardTab = 'chats' | 'mcp-tools' | 'api-docs' | 'settings';
+type DashboardTab = 'chats' | 'mcp-tools' | 'api-docs' | 'settings' | 'dataset';
+
+const dashboardTabs: DashboardTab[] = ['chats', 'mcp-tools', 'api-docs', 'settings', 'dataset'];
+
+const isDashboardTab = (value: string): value is DashboardTab => dashboardTabs.includes(value as DashboardTab);
+
+const getDashboardTab = (hash: string): DashboardTab => {
+  const match = hash.match(/^#\/dashboard\/([^/?#]+)/);
+  const tab = match?.[1];
+  return tab && isDashboardTab(tab) ? tab : 'settings';
+};
 
 function App() {
   // Parse initial route and tab from window.location.hash
@@ -19,11 +30,7 @@ function App() {
   });
 
   const [activeTab, setActiveTab] = useState<DashboardTab>(() => {
-    const hash = window.location.hash;
-    if (hash === '#/dashboard/chats') return 'chats';
-    if (hash === '#/dashboard/mcp-tools') return 'mcp-tools';
-    if (hash === '#/dashboard/api-docs') return 'api-docs';
-    return 'settings'; // Default to settings as shown in reference UI
+    return getDashboardTab(window.location.hash);
   });
 
   // Sync state when browser back/forward or hash changes
@@ -32,23 +39,28 @@ function App() {
       const hash = window.location.hash;
       if (hash.startsWith('#/dashboard')) {
         setCurrentRoute('dashboard');
-        if (hash === '#/dashboard/chats') setActiveTab('chats');
-        else if (hash === '#/dashboard/mcp-tools') setActiveTab('mcp-tools');
-        else if (hash === '#/dashboard/api-docs') setActiveTab('api-docs');
-        else setActiveTab('settings');
+        setActiveTab(getDashboardTab(hash));
       } else if (hash === '#/login') {
         setCurrentRoute('login');
       }
     };
 
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+    };
   }, []);
 
   const handleSelectTab = (tabId: string) => {
-    const tab = tabId as DashboardTab;
-    setActiveTab(tab);
-    window.location.hash = `#/dashboard/${tab}`;
+    if (!isDashboardTab(tabId)) return;
+
+    const nextHash = `#/dashboard/${tabId}`;
+    setActiveTab(tabId);
+    if (window.location.hash !== nextHash) {
+      window.history.pushState(null, '', nextHash);
+    }
   };
 
   const handleLoginSuccess = () => {
@@ -80,6 +92,7 @@ function App() {
       {activeTab === 'chats' && <ChatsPage />}
       {activeTab === 'mcp-tools' && <McpToolsPage />}
       {activeTab === 'api-docs' && <ApiDocsPage />}
+      {activeTab === 'dataset' && <DatasetPage />}
     </DashboardLayout>
   );
 }
