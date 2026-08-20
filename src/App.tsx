@@ -6,11 +6,15 @@ import ChatsPage from './pages/dashboard/chats';
 import McpToolsPage from './pages/dashboard/mcp-tools';
 import ApiDocsPage from './pages/dashboard/api-docs';
 import DatasetPage from './pages/dashboard/dataset';
+import VectorSearchPage from './pages/dashboard/vector-search';
+import KisSearchPage from './pages/dashboard/kis-search';
+import ObjectsSearchPage from './pages/dashboard/objects-search';
+import FulltextSearchPage from './pages/dashboard/fulltext-search';
 
 type AppRoute = 'login' | 'dashboard';
-type DashboardTab = 'chats' | 'mcp-tools' | 'api-docs' | 'settings' | 'dataset';
+type DashboardTab = 'chats' | 'mcp-tools' | 'api-docs' | 'settings' | 'dataset' | 'vector-search' | 'kis-search' | 'objects-search' | 'fulltext-search';
 
-const dashboardTabs: DashboardTab[] = ['chats', 'mcp-tools', 'api-docs', 'settings', 'dataset'];
+const dashboardTabs: DashboardTab[] = ['chats', 'mcp-tools', 'api-docs', 'settings', 'dataset', 'vector-search', 'kis-search', 'objects-search', 'fulltext-search'];
 
 const isDashboardTab = (value: string): value is DashboardTab => dashboardTabs.includes(value as DashboardTab);
 
@@ -93,6 +97,10 @@ function App() {
       {activeTab === 'mcp-tools' && <McpToolsPage />}
       {activeTab === 'api-docs' && <ApiDocsPage />}
       {activeTab === 'dataset' && <DatasetPage />}
+      {activeTab === 'vector-search' && <VectorSearchPage />}
+      {activeTab === 'kis-search' && <KisSearchPage />}
+      {activeTab === 'objects-search' && <ObjectsSearchPage />}
+      {activeTab === 'fulltext-search' && <FulltextSearchPage />}
     </DashboardLayout>
   );
 }
