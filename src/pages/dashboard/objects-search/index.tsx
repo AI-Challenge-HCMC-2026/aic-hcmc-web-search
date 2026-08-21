@@ -343,15 +343,13 @@ export const ObjectsSearchPage: React.FC = () => {
                     alt={`${item.video_id} — ${item.keyframe_name}`}
                     loading="lazy"
                   />
-                  {item.frame_idx != null && (
-                    <span className="objects-result-badge">
-                      #{item.frame_idx}
-                    </span>
-                  )}
+                  <span className="objects-result-badge">
+                    Frame #{item.frame_idx ?? '—'}
+                  </span>
                   <div className="objects-result-meta">
                     <span className="objects-result-video">{item.video_id}</span>
                     <span className="objects-result-frame">
-                      {item.keyframe_name}
+                      Frame {item.frame_idx ?? '—'} · {item.keyframe_name}
                       {item.timestamp_sec != null && ` · ${formatTimestamp(item.timestamp_sec)}`}
                     </span>
                   </div>

@@ -1,48 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import {
+  fetchCollectionTree,
+  fetchVideoKeyframes,
+  type VideoTreeNode,
+  type CollectionTreeNode,
+  type PaginatedKeyframesResponse,
+} from '../../../services/api';
 import './index.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '');
 const KEYFRAMES_PER_PAGE = 24;
-
-interface VideoTreeNode {
-  id: string;
-  name: string;
-  type: 'video';
-  title?: string | null;
-  video_path?: string | null;
-  thumbnail_url?: string | null;
-  keyframe_count: number;
-}
-
-interface CollectionTreeNode {
-  id: string;
-  name: string;
-  type: 'collection';
-  total_videos: number;
-  total_keyframes: number;
-  children: VideoTreeNode[];
-}
-
-interface KeyframeItem {
-  keyframe_id: number;
-  video_id: string;
-  keyframe_name: string;
-  frame_idx?: number | null;
-  timestamp_sec?: number | null;
-  image_path: string;
-  public_url?: string | null;
-}
-
-interface KeyframesResponse {
-  video_id: string;
-  total_keyframes: number;
-  page: number;
-  limit: number;
-  total_pages: number;
-  has_next: boolean;
-  has_prev: boolean;
-  items: KeyframeItem[];
-}
 
 const formatCount = (value: number) => new Intl.NumberFormat('vi-VN').format(value);
 
@@ -55,7 +21,7 @@ const formatTimestamp = (seconds?: number | null) => {
 const getVideoLabel = (video: VideoTreeNode) => video.title?.trim() || video.name;
 
 const getApiError = (error: unknown, fallback: string): string => {
-  if (error instanceof TypeError) return 'Không thể kết nối tới máy chủ dữ liệu nội bộ.';
+  if (error instanceof TypeError) return 'Không thể kết nối tới máy chủ dữ liệu nội bộ (kiểm tra CORS hoặc kết nối ngrok).';
   if (error instanceof Error && error.message) return error.message;
   return fallback;
 };
@@ -63,7 +29,7 @@ const getApiError = (error: unknown, fallback: string): string => {
 export const DatasetPage: React.FC = () => {
   const [collections, setCollections] = useState<CollectionTreeNode[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<VideoTreeNode | null>(null);
-  const [keyframes, setKeyframes] = useState<KeyframesResponse | null>(null);
+  const [keyframes, setKeyframes] = useState<PaginatedKeyframesResponse | null>(null);
   const [search, setSearch] = useState('');
   const [keyframePage, setKeyframePage] = useState(1);
   const [keyframesReload, setKeyframesReload] = useState(0);
@@ -78,13 +44,7 @@ export const DatasetPage: React.FC = () => {
     setTreeError(null);
 
     try {
-      if (!API_BASE_URL) throw new Error('Thiếu biến môi trường VITE_API_BASE_URL.');
-      const response = await fetch(`${API_BASE_URL}/tree`, { signal });
-      if (!response.ok) throw new Error(`Không thể tải thư viện dữ liệu (${response.status}).`);
-      const payload: unknown = await response.json();
-      if (!Array.isArray(payload)) throw new Error('Dữ liệu cây thư viện không đúng định dạng.');
-
-      const nextCollections = payload as CollectionTreeNode[];
+      const nextCollections = await fetchCollectionTree(undefined, signal);
       setCollections(nextCollections);
       setExpandedCollections(new Set(nextCollections.slice(0, 1).map((collection) => collection.id)));
       setSelectedVideo((current) => {
@@ -114,15 +74,13 @@ export const DatasetPage: React.FC = () => {
       setKeyframesError(null);
 
       try {
-        if (!API_BASE_URL) throw new Error('Thiếu biến môi trường VITE_API_BASE_URL.');
-        const params = new URLSearchParams({ page: String(keyframePage), limit: String(KEYFRAMES_PER_PAGE) });
-        const response = await fetch(`${API_BASE_URL}/videos/${encodeURIComponent(selectedVideo.id)}/keyframes?${params}`, { signal: controller.signal });
-        if (!response.ok) throw new Error(`Không thể tải keyframe (${response.status}).`);
-        const payload: unknown = await response.json();
-        if (!payload || typeof payload !== 'object' || !Array.isArray((payload as KeyframesResponse).items)) {
-          throw new Error('Dữ liệu keyframe không đúng định dạng.');
-        }
-        setKeyframes(payload as KeyframesResponse);
+        const data = await fetchVideoKeyframes(
+          selectedVideo.id,
+          keyframePage,
+          KEYFRAMES_PER_PAGE,
+          controller.signal,
+        );
+        setKeyframes(data);
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return;
         setKeyframesError(getApiError(error, 'Không thể tải keyframe.'));

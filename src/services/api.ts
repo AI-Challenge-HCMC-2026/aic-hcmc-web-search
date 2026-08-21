@@ -5,7 +5,27 @@
  * environment variable defined in .env.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000/api/v1';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000/api/v1').replace(/\/$/, '');
+
+/**
+ * Universal fetch wrapper that automatically injects headers such as
+ * `ngrok-skip-browser-warning: 69420` to bypass ngrok's interstitial page
+ * and prevent CORS block issues when tunneling.
+ */
+export async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+  const headers = new Headers(init?.headers);
+  if (!headers.has('ngrok-skip-browser-warning')) {
+    headers.set('ngrok-skip-browser-warning', '69420');
+  }
+  if (!headers.has('Content-Type') && (init?.method === 'POST' || init?.method === 'PUT' || init?.method === 'PATCH')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  return fetch(input, {
+    ...init,
+    headers,
+  });
+}
 
 /* ─── Shared Types ─── */
 
@@ -23,6 +43,38 @@ export interface GeminiConfig {
   api_key?: string | null;
   model?: string;
   base_url?: string | null;
+}
+
+/* ─── Tree & Keyframes Types ─── */
+
+export interface VideoTreeNode {
+  id: string;
+  name: string;
+  type: 'video';
+  title?: string | null;
+  video_path?: string | null;
+  thumbnail_url?: string | null;
+  keyframe_count: number;
+}
+
+export interface CollectionTreeNode {
+  id: string;
+  name: string;
+  type: 'collection';
+  total_videos: number;
+  total_keyframes: number;
+  children: VideoTreeNode[];
+}
+
+export interface PaginatedKeyframesResponse {
+  video_id: string;
+  total_keyframes: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+  has_next: boolean;
+  has_prev: boolean;
+  items: KeyframeItem[];
 }
 
 /* ─── Object Search Types ─── */
@@ -121,6 +173,36 @@ export interface KISSearchResponse {
 /* ─── API Functions ─── */
 
 /**
+ * Fetch the dataset collection & video tree hierarchy.
+ */
+export async function fetchCollectionTree(
+  videoLimit?: number,
+  signal?: AbortSignal,
+): Promise<CollectionTreeNode[]> {
+  const params = new URLSearchParams();
+  if (videoLimit !== undefined) params.set('video_limit', String(videoLimit));
+
+  const res = await apiFetch(`${API_BASE_URL}/tree?${params}`, { signal });
+  if (!res.ok) throw new Error(`Không thể tải thư viện dữ liệu (${res.status}).`);
+  return res.json();
+}
+
+/**
+ * List paginated keyframes for a specific video.
+ */
+export async function fetchVideoKeyframes(
+  videoId: string,
+  page: number = 1,
+  limit: number = 24,
+  signal?: AbortSignal,
+): Promise<PaginatedKeyframesResponse> {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  const res = await apiFetch(`${API_BASE_URL}/videos/${encodeURIComponent(videoId)}/keyframes?${params}`, { signal });
+  if (!res.ok) throw new Error(`Không thể tải keyframe (${res.status}).`);
+  return res.json();
+}
+
+/**
  * Search the object vocabulary whitelist by substring.
  */
 export async function fetchObjectVocabulary(
@@ -131,7 +213,7 @@ export async function fetchObjectVocabulary(
   const params = new URLSearchParams({ limit: String(limit) });
   if (query) params.set('query', query);
 
-  const res = await fetch(`${API_BASE_URL}/keyframes/objects/vocabulary?${params}`, { signal });
+  const res = await apiFetch(`${API_BASE_URL}/keyframes/objects/vocabulary?${params}`, { signal });
   if (!res.ok) throw new Error(`Vocabulary request failed: ${res.status}`);
   return res.json();
 }
@@ -143,7 +225,7 @@ export async function searchByObjects(
   body: MultiObjectSearchRequest,
   signal?: AbortSignal,
 ): Promise<MultiObjectSearchResponse> {
-  const res = await fetch(`${API_BASE_URL}/keyframes/search-by-objects`, {
+  const res = await apiFetch(`${API_BASE_URL}/keyframes/search-by-objects`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -164,7 +246,7 @@ export async function searchFullText(
   body: FullTextSearchRequest,
   signal?: AbortSignal,
 ): Promise<FullTextSearchResponse> {
-  const res = await fetch(`${API_BASE_URL}/search/full-text-search`, {
+  const res = await apiFetch(`${API_BASE_URL}/search/full-text-search`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -184,7 +266,7 @@ export async function searchKisVerification(
   body: KISSearchRequest,
   signal?: AbortSignal,
 ): Promise<KISSearchResponse> {
-  const res = await fetch(`${API_BASE_URL}/search/kis-search`, {
+  const res = await apiFetch(`${API_BASE_URL}/search/kis-search`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

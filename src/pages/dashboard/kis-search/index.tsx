@@ -855,13 +855,13 @@ export const KisSearchPage: React.FC = () => {
                                         alt={`${kf.video_id} - ${kf.keyframe_name}`}
                                         loading="lazy"
                                       />
-                                      {kf.frame_idx != null && (
-                                        <span className="kis-kf-badge">#{kf.frame_idx}</span>
-                                      )}
+                                      <span className="kis-kf-badge">
+                                        Frame #{kf.frame_idx ?? '—'}
+                                      </span>
                                       <div className="kis-kf-meta">
                                         <span className="kis-kf-video">{kf.video_id}</span>
                                         <span className="kis-kf-frame">
-                                          {kf.keyframe_name}
+                                          Frame {kf.frame_idx ?? '—'} · {kf.keyframe_name}
                                           {kf.timestamp_sec != null && ` · ${formatTimestamp(kf.timestamp_sec)}`}
                                         </span>
                                       </div>
@@ -910,13 +910,13 @@ export const KisSearchPage: React.FC = () => {
                                 alt={`${kf.video_id} - ${kf.keyframe_name}`}
                                 loading="lazy"
                               />
-                              {kf.frame_idx != null && (
-                                <span className="kis-kf-badge">#{kf.frame_idx}</span>
-                              )}
+                              <span className="kis-kf-badge">
+                                Frame #{kf.frame_idx ?? '—'}
+                              </span>
                               <div className="kis-kf-meta">
                                 <span className="kis-kf-video">{kf.video_id}</span>
                                 <span className="kis-kf-frame">
-                                  {kf.keyframe_name}
+                                  Frame {kf.frame_idx ?? '—'} · {kf.keyframe_name}
                                   {kf.timestamp_sec != null && ` · ${formatTimestamp(kf.timestamp_sec)}`}
                                 </span>
                               </div>
