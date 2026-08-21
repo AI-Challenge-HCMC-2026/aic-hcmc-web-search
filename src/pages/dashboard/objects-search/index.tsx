@@ -4,6 +4,7 @@ import {
   searchByObjects,
   type KeyframeItem,
 } from '../../../services/api';
+import { getGeminiConfig } from '../../../services/settings';
 import './index.css';
 
 const LIMIT_OPTIONS = [12, 24, 48];
@@ -57,8 +58,16 @@ export const ObjectsSearchPage: React.FC = () => {
       setExtractedObjects([]);
 
       try {
+        const geminiConfig = getGeminiConfig();
         const data = await searchByObjects(
-          { video_id: videoId, query: searchQuery.trim(), threshold, limit, offset: searchOffset },
+          {
+            video_id: videoId,
+            query: searchQuery.trim(),
+            gemini_config: geminiConfig,
+            threshold,
+            limit,
+            offset: searchOffset,
+          },
           controller.signal,
         );
         setResults(data.items);
