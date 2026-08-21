@@ -1,714 +1,445 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '../../../components/ui/Button';
+import {
+  searchByObjects,
+  type KeyframeItem,
+} from '../../../services/api';
 import './index.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || 'http://127.0.0.1:8000/api/v1';
+const LIMIT_OPTIONS = [12, 24, 48];
 
-export interface VocabularyItem {
-  class_name: string;
-  class_entity: string;
-}
-
-export interface KeyframeItem {
-  keyframe_id: number;
-  video_id: string;
-  keyframe_name: string;
-  frame_idx?: number | null;
-  timestamp_sec?: number | null;
-  image_path: string;
-  public_url?: string | null;
-}
-
-export interface MultiObjectSearchResponse {
-  total: number;
-  limit: number;
-  offset: number;
-  items: KeyframeItem[];
-}
-
-const POPULAR_OBJECTS = [
-  'Person',
-  'Car',
-  'Bicycle',
-  'Bus',
-  'Traffic light',
-  'Land vehicle',
-  'Backpack',
-  'Tree',
-  'Building',
-  'Ambulance',
-  'Chair',
-  'Boat',
+const SUGGESTION_QUERIES = [
+  'người đi xe đạp',
+  'ô tô đỗ bên đường',
+  'người cầm ô',
+  'con chó nằm trên ghế',
+  'xe máy gần biển báo',
+  'một người đứng cạnh cây',
 ];
 
-const formatCount = (value: number) => new Intl.NumberFormat('vi-VN').format(value);
-
-const formatTimestamp = (seconds?: number | null) => {
-  if (seconds === null || seconds === undefined || Number.isNaN(seconds)) return '—';
-  const wholeSeconds = Math.max(0, Math.floor(seconds));
-  return `${Math.floor(wholeSeconds / 60)}:${(wholeSeconds % 60).toString().padStart(2, '0')}`;
-};
+type SearchState = 'idle' | 'loading' | 'done' | 'error';
 
 export const ObjectsSearchPage: React.FC = () => {
-  // Selected object tags
-  const [selectedObjects, setSelectedObjects] = useState<string[]>(['Car']);
-  const [threshold, setThreshold] = useState<number>(0.5);
-  const [limit, setLimit] = useState<number>(24);
-  const [offset, setOffset] = useState<number>(0);
+  /* ── Video ID ── */
+  const [videoId, setVideoId] = useState('');
 
-  // Vocabulary search / autocomplete state
-  const [inputValue, setInputValue] = useState<string>('');
-  const [vocabSuggestions, setVocabSuggestions] = useState<VocabularyItem[]>([]);
-  const [isVocabLoading, setIsVocabLoading] = useState<boolean>(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-  const [selectedVocabIndex, setSelectedVocabIndex] = useState<number>(-1);
+  /* ── Query ── */
+  const [query, setQuery] = useState('');
 
-  // Search execution state
-  const [searchResults, setSearchResults] = useState<MultiObjectSearchResponse | null>(null);
-  const [isSearching, setIsSearching] = useState<boolean>(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-  const [activeSearchMeta, setActiveSearchMeta] = useState<{
-    objects: string[];
-    threshold: number;
-    total: number;
-  } | null>(null);
+  /* ── Filters ── */
+  const [threshold, setThreshold] = useState(0.5);
+  const [limit, setLimit] = useState(24);
 
-  // Keyframe detail modal
-  const [selectedKeyframe, setSelectedKeyframe] = useState<KeyframeItem | null>(null);
-  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  /* ── Results ── */
+  const [searchState, setSearchState] = useState<SearchState>('idle');
+  const [results, setResults] = useState<KeyframeItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const [extractedObjects, setExtractedObjects] = useState<string[]>([]);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const debounceTimerRef = useRef<number | null>(null);
+  /* ── Lightbox ── */
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
-  // Fetch vocabulary suggestions when typing
-  const fetchVocabulary = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      setVocabSuggestions([]);
-      setIsVocabLoading(false);
-      return;
-    }
+  const abortRef = useRef<AbortController | null>(null);
 
-    setIsVocabLoading(true);
-    try {
-      const url = `${API_BASE_URL}/keyframes/objects/vocabulary?query=${encodeURIComponent(query.trim())}&limit=20`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Vocabulary fetch failed: ${response.status}`);
-      const data: VocabularyItem[] = await response.json();
-      setVocabSuggestions(data);
-      setSelectedVocabIndex(-1);
-    } catch {
-      setVocabSuggestions([]);
-    } finally {
-      setIsVocabLoading(false);
-    }
-  }, []);
+  /* ─── Search execution ─── */
+  const executeSearch = useCallback(
+    async (searchQuery: string, videoId: string, searchOffset: number = 0) => {
+      if (!searchQuery.trim() || !videoId) return;
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setInputValue(val);
-    setIsDropdownOpen(true);
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    if (debounceTimerRef.current) {
-      window.clearTimeout(debounceTimerRef.current);
-    }
+      setSearchState('loading');
+      setErrorMsg('');
+      setExtractedObjects([]);
 
-    debounceTimerRef.current = window.setTimeout(() => {
-      void fetchVocabulary(val);
-    }, 200);
-  };
-
-  const addObject = (objectName: string) => {
-    const trimmed = objectName.trim();
-    if (!trimmed) return;
-    if (!selectedObjects.some((item) => item.toLowerCase() === trimmed.toLowerCase())) {
-      setSelectedObjects((prev) => [...prev, trimmed]);
-    }
-    setInputValue('');
-    setVocabSuggestions([]);
-    setIsDropdownOpen(false);
-    inputRef.current?.focus();
-  };
-
-  const removeObject = (objectName: string) => {
-    setSelectedObjects((prev) => prev.filter((item) => item.toLowerCase() !== objectName.toLowerCase()));
-  };
-
-  const togglePopularObject = (objectName: string) => {
-    if (selectedObjects.some((item) => item.toLowerCase() === objectName.toLowerCase())) {
-      removeObject(objectName);
-    } else {
-      addObject(objectName);
-    }
-  };
-
-  const clearAllObjects = () => {
-    setSelectedObjects([]);
-    setInputValue('');
-    setVocabSuggestions([]);
-    setIsDropdownOpen(false);
-    inputRef.current?.focus();
-  };
-
-  // Perform search query
-  const executeSearch = async (newOffset: number = 0, objectsToSearch?: string[]) => {
-    const targetObjects = objectsToSearch || selectedObjects;
-    if (targetObjects.length === 0) {
-      setSearchError('Vui lòng chọn ít nhất một vật thể để tìm kiếm.');
-      return;
-    }
-
-    setIsSearching(true);
-    setSearchError(null);
-    setOffset(newOffset);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/keyframes/search-by-objects`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          objects: targetObjects,
-          threshold,
-          limit,
-          offset: newOffset,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData?.detail?.[0]?.msg || `Yêu cầu thất bại (${response.status})`);
+      try {
+        const data = await searchByObjects(
+          { video_id: videoId, query: searchQuery.trim(), threshold, limit, offset: searchOffset },
+          controller.signal,
+        );
+        setResults(data.items);
+        setTotal(data.total);
+        setOffset(searchOffset);
+        setExtractedObjects(data.extracted_objects ?? []);
+        setSearchState('done');
+      } catch (err: unknown) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        setSearchState('error');
+        setErrorMsg(err instanceof Error ? err.message : 'Lỗi không xác định');
       }
-
-      const data: MultiObjectSearchResponse = await response.json();
-      setSearchResults(data);
-      setActiveSearchMeta({
-        objects: [...targetObjects],
-        threshold,
-        total: data.total,
-      });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Không thể kết nối đến máy chủ tìm kiếm.';
-      setSearchError(msg);
-      setSearchResults(null);
-    } finally {
-      setIsSearching(false);
-    }
-  };
+    },
+    [threshold, limit],
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputValue.trim()) {
-      const trimmed = inputValue.trim();
-      const updated = selectedObjects.some((item) => item.toLowerCase() === trimmed.toLowerCase())
-        ? selectedObjects
-        : [...selectedObjects, trimmed];
-      setSelectedObjects(updated);
-      setInputValue('');
-      setIsDropdownOpen(false);
-      void executeSearch(0, updated);
-    } else {
-      void executeSearch(0);
-    }
+    setOffset(0);
+    executeSearch(query, videoId, 0);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (vocabSuggestions.length > 0) {
-        setSelectedVocabIndex((prev) => (prev < vocabSuggestions.length - 1 ? prev + 1 : 0));
-      }
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (vocabSuggestions.length > 0) {
-        setSelectedVocabIndex((prev) => (prev > 0 ? prev - 1 : vocabSuggestions.length - 1));
-      }
-    } else if (e.key === 'Enter') {
-      if (isDropdownOpen && selectedVocabIndex >= 0 && vocabSuggestions[selectedVocabIndex]) {
-        e.preventDefault();
-        addObject(vocabSuggestions[selectedVocabIndex].class_entity);
-      }
-    } else if (e.key === 'Backspace' && !inputValue && selectedObjects.length > 0) {
-      removeObject(selectedObjects[selectedObjects.length - 1]);
-    } else if (e.key === 'Escape') {
-      setIsDropdownOpen(false);
-    }
+  const handlePageChange = (newOffset: number) => {
+    executeSearch(query, videoId, newOffset);
   };
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node) &&
-        inputRef.current &&
-        !inputRef.current.contains(e.target as Node)
-      ) {
-        setIsDropdownOpen(false);
-      }
-    };
+  const handleSuggestion = (suggestion: string) => {
+    setQuery(suggestion);
+    setTimeout(() => executeSearch(suggestion, videoId, 0), 0);
+  };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Modal ESC key listener
+  /* ─── Lightbox keyboard navigation ─── */
   useEffect(() => {
-    const handleKeyDownModal = (e: KeyboardEvent) => {
+    if (lightboxIdx === null) return;
+
+    const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setSelectedKeyframe(null);
+        setLightboxIdx(null);
+      } else if (e.key === 'ArrowRight') {
+        setLightboxIdx((prev) => (prev !== null && prev < results.length - 1 ? prev + 1 : prev));
+      } else if (e.key === 'ArrowLeft') {
+        setLightboxIdx((prev) => (prev !== null && prev > 0 ? prev - 1 : prev));
       }
     };
-    if (selectedKeyframe) {
-      window.addEventListener('keydown', handleKeyDownModal);
-      return () => window.removeEventListener('keydown', handleKeyDownModal);
-    }
-  }, [selectedKeyframe]);
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    setCopyFeedback(label);
-    setTimeout(() => setCopyFeedback(null), 2000);
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKey);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKey);
+    };
+  }, [lightboxIdx, results.length]);
+
+  const lightboxItem = lightboxIdx !== null ? results[lightboxIdx] : null;
+
+  /* ─── Helpers ─── */
+  const totalPages = Math.ceil(total / limit);
+  const currentPage = Math.floor(offset / limit) + 1;
+  const canSubmit = query.trim().length >= 2 && !!videoId;
+
+  const formatTimestamp = (sec: number | null) => {
+    if (sec == null) return '';
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${String(s).padStart(2, '0')}`;
   };
 
-  const totalPages = searchResults ? Math.ceil(searchResults.total / limit) : 0;
-  const currentPage = Math.floor(offset / limit) + 1;
+  const statusLabel = (): string => {
+    switch (searchState) {
+      case 'idle':
+        return 'Sẵn sàng tìm kiếm';
+      case 'loading':
+        return 'Đang phân tích & tìm kiếm…';
+      case 'done':
+        return `${total.toLocaleString()} kết quả`;
+      case 'error':
+        return 'Lỗi';
+    }
+  };
 
   return (
-    <div className="objects-search-container">
-      {/* ─── Header ─── */}
-      <header className="objects-search-header">
-        <div className="objects-search-title-row">
-          <span className="objects-search-sparkle" aria-hidden="true">✻</span>
-          <h1 className="objects-search-title">Objects Search</h1>
+    <div className="objects-search-page">
+      {/* ── Header ── */}
+      <header className="objects-header">
+        <div className="objects-header-row">
+          <span className="sparkle" aria-hidden="true">✻</span>
+          <h1>Objects Search</h1>
         </div>
-        <p className="objects-search-subtitle">
-          Tìm kiếm keyframe theo các vật thể đồng xuất hiện (co-occurring objects) với độ tin cậy được tinh chỉnh.
+        <p className="objects-subtitle">
+          Mô tả vật thể bằng ngôn ngữ tự nhiên — Gemini tự động nhận diện và tìm kiếm keyframe chứa các vật thể trong video.
         </p>
       </header>
 
-      {/* ─── Command Search Card ─── */}
-      <section className="objects-command-card" aria-label="Objects search command bar">
-        <div className="objects-command-header">
-          <span className="objects-command-label">OBJECT CO-OCCURRENCE PIPELINE</span>
-          <span className="objects-command-desc">
-            Nhập tên vật thể hoặc chọn từ danh mục whitelist OpenImages.
-          </span>
+      {/* ── Search Command Card ── */}
+      <section className="objects-command-card" aria-label="Object search command bar">
+        <div className="objects-command-intro">
+          <span className="objects-command-label">OBJECT SEARCH</span>
+          <span>Nhập mô tả cảnh và chọn video. Gemini sẽ trích xuất vật thể và tìm keyframe phù hợp.</span>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* Multi-Tag Input Field */}
-          <div className="objects-tag-input-container">
-            <div
-              className={`objects-tag-input-box ${isDropdownOpen ? 'is-focused' : ''}`}
-              onClick={() => inputRef.current?.focus()}
-            >
-              <div className="objects-search-icon" aria-hidden="true">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-4-4" />
+        <form onSubmit={handleSubmit}>
+          <div className="objects-tags-area">
+            {/* Video ID Input */}
+            <div className="objects-video-selector">
+              <label className="objects-video-label" htmlFor="video-id-input">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polygon points="23 7 16 12 23 17 23 7" />
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
                 </svg>
-              </div>
-
-              {selectedObjects.map((obj) => (
-                <span key={obj} className="objects-selected-tag">
-                  {obj}
-                  <button
-                    type="button"
-                    className="objects-tag-remove"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeObject(obj);
-                    }}
-                    title={`Xóa ${obj}`}
-                    aria-label={`Remove ${obj}`}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-
+                Video
+              </label>
               <input
-                ref={inputRef}
+                id="video-id-input"
                 type="text"
-                className="objects-input-field"
-                value={inputValue}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                onFocus={() => {
-                  if (inputValue.trim()) setIsDropdownOpen(true);
-                }}
-                placeholder={
-                  selectedObjects.length === 0
-                    ? 'Nhập tên đối tượng (ví dụ: Car, Person, Bicycle...)'
-                    : 'Thêm đối tượng đồng xuất hiện khác…'
-                }
+                value={videoId}
+                onChange={(e) => setVideoId(e.target.value)}
+                placeholder="Nhập Video ID (VD: L21_V001)…"
+                aria-label="Video ID"
+                autoComplete="off"
+                className="objects-video-input"
               />
+            </div>
 
-              {selectedObjects.length > 0 && (
-                <button
-                  type="button"
-                  className="objects-clear-all-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clearAllObjects();
-                  }}
-                >
-                  Xóa hết
+            {/* Natural Language Query Input */}
+            <div className="objects-tags-input-wrap">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-4-4" />
+              </svg>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Mô tả vật thể cần tìm (VD: người cầm ô đứng cạnh xe máy)…"
+                aria-label="Object query"
+                autoComplete="off"
+              />
+              {query && (
+                <button type="button" className="search-clear-button" onClick={() => setQuery('')} aria-label="Clear" style={{ padding: '2px 5px', color: 'var(--text-tertiary)', background: 'transparent', border: 0, fontSize: 20, cursor: 'pointer' }}>
+                  ×
                 </button>
               )}
             </div>
 
-            {/* Vocabulary Dropdown */}
-            {isDropdownOpen && inputValue.trim() && (
-              <div className="objects-autocomplete-menu" ref={dropdownRef}>
-                {isVocabLoading ? (
-                  <div className="objects-autocomplete-loading">Đang tìm trong từ điển vật thể…</div>
-                ) : vocabSuggestions.length > 0 ? (
-                  vocabSuggestions.map((item, index) => (
-                    <button
-                      key={item.class_name}
-                      type="button"
-                      className={`objects-autocomplete-item ${index === selectedVocabIndex ? 'is-selected' : ''}`}
-                      onClick={() => addObject(item.class_entity)}
-                      onMouseEnter={() => setSelectedVocabIndex(index)}
-                    >
-                      <span>{item.class_entity}</span>
-                      <span className="objects-autocomplete-class">{item.class_name}</span>
-                    </button>
-                  ))
-                ) : (
-                  <div className="objects-autocomplete-empty">
-                    Không tìm thấy vật thể trong whitelist. Nhấn <strong>Enter</strong> để thêm trực tiếp.
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Quick-Pick Popular Tags */}
-          <div className="objects-quick-tags">
-            <span className="objects-quick-label">Gợi ý nhanh:</span>
-            {POPULAR_OBJECTS.map((name) => {
-              const isActive = selectedObjects.some((o) => o.toLowerCase() === name.toLowerCase());
-              return (
-                <button
-                  type="button"
-                  key={name}
-                  className={`objects-chip-btn ${isActive ? 'is-active' : ''}`}
-                  onClick={() => togglePopularObject(name)}
-                >
-                  <span>{isActive ? '✓' : '+'}</span>
-                  <span>{name}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Filters & Actions Bar */}
-          <div className="objects-controls-row">
-            <div className="objects-filter-group">
-              {/* Threshold Slider / Select */}
-              <div className="objects-filter-item">
-                <label htmlFor="obj-threshold">Confidence:</label>
-                <div className="objects-slider-wrap">
+            {/* Filters + Submit */}
+            <div className="objects-controls">
+              <div className="objects-filter-list">
+                <label className="objects-filter">
+                  <span>Threshold</span>
                   <input
-                    id="obj-threshold"
-                    type="range"
-                    min="0.1"
-                    max="0.95"
-                    step="0.05"
+                    type="number"
+                    min={0}
+                    max={1}
+                    step={0.01}
                     value={threshold}
-                    onChange={(e) => setThreshold(parseFloat(e.target.value))}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      if (!isNaN(v)) setThreshold(Math.min(1, Math.max(0, v)));
+                    }}
+                    aria-label="Threshold"
+                    className="objects-threshold-input"
                   />
-                  <span className="objects-slider-val">{threshold.toFixed(2)}</span>
-                </div>
+                </label>
+                <label className="objects-filter">
+                  <span>Limit</span>
+                  <select value={limit} onChange={(e) => setLimit(Number(e.target.value))} aria-label="Limit">
+                    {LIMIT_OPTIONS.map((l) => (
+                      <option value={l} key={l}>{l}</option>
+                    ))}
+                  </select>
+                </label>
               </div>
-
-              {/* Items Per Page Limit */}
-              <div className="objects-filter-item">
-                <label htmlFor="obj-limit">Hiển thị:</label>
-                <select
-                  id="obj-limit"
-                  value={limit}
-                  onChange={(e) => setLimit(parseInt(e.target.value, 10))}
-                >
-                  <option value="12">12 keyframes</option>
-                  <option value="24">24 keyframes</option>
-                  <option value="48">48 keyframes</option>
-                  <option value="96">96 keyframes</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="objects-actions-group">
-              {selectedObjects.length > 0 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="md"
-                  onClick={clearAllObjects}
-                  disabled={isSearching}
-                >
-                  Làm mới
-                </Button>
-              )}
               <Button
                 type="submit"
                 variant="primary"
                 size="md"
-                isLoading={isSearching}
                 leftIcon={<span aria-hidden="true">↗</span>}
+                disabled={!canSubmit}
+                isLoading={searchState === 'loading'}
               >
-                Tìm kiếm
+                Search
               </Button>
             </div>
           </div>
         </form>
       </section>
 
-      {/* ─── Search Results Section ─── */}
+      {/* ── Results Card ── */}
       <section className="objects-results-card" aria-live="polite">
         <div className="objects-results-header">
-          <div className="objects-results-heading">
-            <span className="objects-command-label">OBJECT DETECTIONS</span>
+          <div>
+            <span className="objects-results-eyebrow">OBJECT DETECTIONS</span>
             <h2>
-              {activeSearchMeta
-                ? `Kết quả tìm kiếm cho [${activeSearchMeta.objects.join(' + ')}]`
-                : 'Khám phá keyframe theo đối tượng'}
+              {searchState === 'done' && results.length > 0
+                ? `Kết quả trong ${videoId}`
+                : searchState === 'loading'
+                  ? 'Đang phân tích vật thể…'
+                  : 'Nhập mô tả và chọn video để bắt đầu'}
             </h2>
-            {activeSearchMeta && (
-              <div className="objects-results-summary">
-                <span>
-                  Tìm thấy <strong>{formatCount(activeSearchMeta.total)}</strong> keyframes chứa cùng lúc:
-                </span>
-                <span className="objects-results-tag-list">
-                  {activeSearchMeta.objects.map((obj) => (
-                    <span key={obj} className="objects-results-tag-pill">{obj}</span>
-                  ))}
-                </span>
-                <span>(Độ tin cậy ≥ {activeSearchMeta.threshold.toFixed(2)})</span>
-              </div>
-            )}
           </div>
-          <span className="objects-results-badge">
-            <i /> API v1 Keyframes
+          <span className={`objects-results-status ${searchState}`}>
+            <i />
+            {statusLabel()}
           </span>
         </div>
 
-        {/* Loading Skeletons */}
-        {isSearching && (
-          <div className="objects-keyframe-grid" aria-label="Đang tìm kiếm keyframe...">
-            {Array.from({ length: limit > 24 ? 24 : limit }, (_, index) => (
-              <div key={index} className="objects-skeleton-card" />
+        {/* Extracted Objects Badge Row */}
+        {searchState === 'done' && extractedObjects.length > 0 && (
+          <div className="objects-extracted-row">
+            <span className="objects-extracted-label">Gemini trích xuất:</span>
+            {extractedObjects.map((obj) => (
+              <span className="object-tag" key={obj}>{obj}</span>
+            ))}
+          </div>
+        )}
+
+        {/* Idle State */}
+        {searchState === 'idle' && (
+          <div className="objects-empty-state">
+            <div className="objects-empty-icon" aria-hidden="true">✻</div>
+            <h3>Mô tả vật thể để tìm kiếm</h3>
+            <p>Nhập mô tả bằng ngôn ngữ tự nhiên. Gemini sẽ tự động nhận diện các vật thể từ câu mô tả và tìm keyframe chứa chúng trong video đã chọn.</p>
+            <div className="objects-suggestions">
+              {SUGGESTION_QUERIES.map((s) => (
+                <button type="button" key={s} onClick={() => handleSuggestion(s)}>
+                  {s}
+                  <span aria-hidden="true">↗</span>
+                </button>
+              ))}
+            </div>
+            <div className="objects-preview-grid" aria-hidden="true">
+              {[0, 1, 2, 3].map((i) => <span key={i} />)}
+            </div>
+          </div>
+        )}
+
+        {/* Loading Skeleton */}
+        {searchState === 'loading' && (
+          <div className="objects-skeleton-grid">
+            {Array.from({ length: limit > 12 ? 12 : limit }).map((_, i) => (
+              <div className="objects-skeleton-item" key={i}>
+                <div className="objects-skeleton-img" />
+                <div className="objects-skeleton-meta">
+                  <div className="objects-skeleton-line" />
+                  <div className="objects-skeleton-line short" />
+                </div>
+              </div>
             ))}
           </div>
         )}
 
         {/* Error State */}
-        {!isSearching && searchError && (
-          <div className="objects-empty-state is-error">
-            <span className="objects-empty-icon" aria-hidden="true">!</span>
-            <h3>Không thể thực hiện tìm kiếm</h3>
-            <p>{searchError}</p>
-            <Button variant="outline" size="sm" onClick={() => void executeSearch(offset)}>
-              Thử lại
-            </Button>
-          </div>
-        )}
-
-        {/* Empty Search Results State */}
-        {!isSearching && !searchError && searchResults && searchResults.items.length === 0 && (
+        {searchState === 'error' && (
           <div className="objects-empty-state">
-            <span className="objects-empty-icon" aria-hidden="true">∅</span>
-            <h3>Không tìm thấy keyframe phù hợp</h3>
-            <p>
-              Không có keyframe nào chứa đồng thời tất cả các vật thể đã chọn với ngưỡng tin cậy ≥ {threshold.toFixed(2)}.
-              Hãy thử giảm ngưỡng tin cậy hoặc bớt bớt một vài đối tượng.
-            </p>
-          </div>
-        )}
-
-        {/* Initial Prompt State */}
-        {!isSearching && !searchError && !searchResults && (
-          <div className="objects-empty-state">
-            <div className="objects-empty-icon" aria-hidden="true">✻</div>
-            <h3>Bắt đầu tìm kiếm với các đối tượng mục tiêu</h3>
-            <p>
-              Chọn một hoặc nhiều đối tượng ở thanh tìm kiếm bên trên và nhấn <strong>Tìm kiếm</strong> để lọc
-              các khung hình chứa đồng thời các đối tượng đó.
-            </p>
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => void executeSearch(0)}
-              style={{ marginTop: '16px' }}
-            >
-              Tìm thử với [{selectedObjects.join(', ') || 'Car'}]
-            </Button>
+            <div className="objects-error-message">
+              <div className="objects-empty-icon" aria-hidden="true" style={{ color: 'var(--error)', background: 'rgba(239, 68, 68, 0.12)' }}>!</div>
+              <h3>Không thể hoàn thành tìm kiếm</h3>
+              <p>{errorMsg}</p>
+              <Button variant="secondary" size="sm" onClick={() => executeSearch(query, videoId, offset)}>
+                Thử lại
+              </Button>
+            </div>
           </div>
         )}
 
         {/* Results Grid */}
-        {!isSearching && !searchError && searchResults && searchResults.items.length > 0 && (
+        {searchState === 'done' && results.length > 0 && (
           <>
-            <div className="objects-keyframe-grid">
-              {searchResults.items.map((item) => (
-                <figure
-                  key={item.keyframe_id}
-                  className="objects-keyframe-card"
-                  onClick={() => setSelectedKeyframe(item)}
-                  title={`Xem chi tiết: ${item.video_id} - ${item.keyframe_name}`}
-                >
-                  <div className="objects-keyframe-media">
-                    {item.public_url ? (
-                      <img
-                        src={item.public_url}
-                        alt={`${item.video_id} - ${item.keyframe_name}`}
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="dataset-image-missing">Không có ảnh</div>
-                    )}
-                    <span className="objects-keyframe-badge">{item.video_id}</span>
-                    <span className="objects-keyframe-name-tag">{item.keyframe_name}</span>
-                    <div className="objects-keyframe-overlay">
-                      <span>Phóng to ↗</span>
-                    </div>
+            <div className="objects-results-grid">
+              {results.map((item, idx) => (
+                <div className="objects-result-item" key={item.keyframe_id} onClick={() => setLightboxIdx(idx)}>
+                  <img
+                    src={item.public_url ?? ''}
+                    alt={`${item.video_id} — ${item.keyframe_name}`}
+                    loading="lazy"
+                  />
+                  {item.frame_idx != null && (
+                    <span className="objects-result-badge">
+                      #{item.frame_idx}
+                    </span>
+                  )}
+                  <div className="objects-result-meta">
+                    <span className="objects-result-video">{item.video_id}</span>
+                    <span className="objects-result-frame">
+                      {item.keyframe_name}
+                      {item.timestamp_sec != null && ` · ${formatTimestamp(item.timestamp_sec)}`}
+                    </span>
                   </div>
-                  <figcaption className="objects-keyframe-info">
-                    <span>Frame: <strong>{item.frame_idx ?? '—'}</strong></span>
-                    <span>Thời gian: <strong>{formatTimestamp(item.timestamp_sec)}</strong></span>
-                  </figcaption>
-                </figure>
+                </div>
               ))}
             </div>
 
-            {/* Pagination Controls */}
-            <div className="objects-pagination">
-              <span>
-                Hiển thị {offset + 1} - {Math.min(offset + limit, searchResults.total)} trên tổng số {formatCount(searchResults.total)} keyframes
-              </span>
-              <div className="objects-pagination-buttons">
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="objects-pagination">
                 <button
                   type="button"
-                  onClick={() => void executeSearch(Math.max(0, offset - limit))}
-                  disabled={offset === 0 || isSearching}
+                  disabled={currentPage <= 1}
+                  onClick={() => handlePageChange(offset - limit)}
                 >
                   ← Trước
                 </button>
-                <span>
-                  Trang {currentPage} / {totalPages || 1}
+                <span className="objects-pagination-info">
+                  {currentPage} / {totalPages}
                 </span>
                 <button
                   type="button"
-                  onClick={() => void executeSearch(offset + limit)}
-                  disabled={offset + limit >= searchResults.total || isSearching}
+                  disabled={currentPage >= totalPages}
+                  onClick={() => handlePageChange(offset + limit)}
                 >
                   Sau →
                 </button>
               </div>
-            </div>
+            )}
           </>
+        )}
+
+        {/* No Results */}
+        {searchState === 'done' && results.length === 0 && (
+          <div className="objects-empty-state">
+            <div className="objects-empty-icon" aria-hidden="true">⌁</div>
+            <h3>Không tìm thấy kết quả</h3>
+            <p>
+              Không có keyframe nào trong video {videoId} chứa các vật thể
+              {extractedObjects.length > 0 && ` [${extractedObjects.join(', ')}]`} với threshold ≥ {threshold}. Thử giảm threshold hoặc thay đổi mô tả.
+            </p>
+          </div>
         )}
       </section>
 
-      {/* ─── Keyframe Detail Modal ─── */}
-      {selectedKeyframe && (
-        <div
-          className="objects-modal-backdrop"
-          onClick={() => setSelectedKeyframe(null)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="objects-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="objects-modal-header">
-              <h3>
-                <span style={{ color: 'var(--accent-terracotta)' }}>✻</span>
-                {selectedKeyframe.video_id} — {selectedKeyframe.keyframe_name}
-              </h3>
-              <button
-                type="button"
-                className="objects-modal-close"
-                onClick={() => setSelectedKeyframe(null)}
-                aria-label="Đóng"
-              >
-                ×
-              </button>
-            </div>
+      {/* ── Lightbox Modal ── */}
+      {lightboxItem && (
+        <div className="lightbox-overlay" onClick={() => setLightboxIdx(null)}>
+          <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+            {/* Close */}
+            <button className="lightbox-close" onClick={() => setLightboxIdx(null)} aria-label="Đóng">×</button>
 
-            <div className="objects-modal-body">
-              <div className="objects-modal-image-wrap">
-                {selectedKeyframe.public_url ? (
-                  <img
-                    src={selectedKeyframe.public_url}
-                    alt={`${selectedKeyframe.video_id} - ${selectedKeyframe.keyframe_name}`}
-                  />
-                ) : (
-                  <div style={{ color: 'var(--text-tertiary)' }}>Không có xem trước ảnh</div>
-                )}
-              </div>
+            {/* Prev arrow */}
+            <button
+              className="lightbox-arrow lightbox-prev"
+              disabled={lightboxIdx === 0}
+              onClick={() => setLightboxIdx((p) => (p !== null && p > 0 ? p - 1 : p))}
+              aria-label="Ảnh trước"
+            >
+              ‹
+            </button>
 
-              <div className="objects-modal-details-grid">
-                <div className="objects-modal-detail-card">
-                  <span>Keyframe ID</span>
-                  <strong>#{selectedKeyframe.keyframe_id}</strong>
-                </div>
-                <div className="objects-modal-detail-card">
-                  <span>Video ID</span>
-                  <strong>{selectedKeyframe.video_id}</strong>
-                </div>
-                <div className="objects-modal-detail-card">
-                  <span>Tên Frame</span>
-                  <strong>{selectedKeyframe.keyframe_name}</strong>
-                </div>
-                <div className="objects-modal-detail-card">
-                  <span>Chỉ số Frame</span>
-                  <strong>{selectedKeyframe.frame_idx ?? '—'}</strong>
-                </div>
-                <div className="objects-modal-detail-card">
-                  <span>Mốc thời gian</span>
-                  <strong>
-                    {formatTimestamp(selectedKeyframe.timestamp_sec)} ({selectedKeyframe.timestamp_sec?.toFixed(2) ?? '—'}s)
-                  </strong>
-                </div>
-                <div className="objects-modal-detail-card">
-                  <span>Đường dẫn ảnh</span>
-                  <strong style={{ fontSize: '11px', wordBreak: 'break-all' }}>
-                    {selectedKeyframe.image_path}
-                  </strong>
-                </div>
-              </div>
+            {/* Image */}
+            <img
+              className="lightbox-img"
+              src={lightboxItem.public_url ?? ''}
+              alt={`${lightboxItem.video_id} — ${lightboxItem.keyframe_name}`}
+            />
 
-              <div className="objects-modal-actions">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    copyToClipboard(
-                      `${selectedKeyframe.video_id} ${selectedKeyframe.frame_idx ?? ''}`,
-                      'Đã copy format bài nộp!'
-                    )
-                  }
-                >
-                  {copyFeedback === 'Đã copy format bài nộp!' ? '✓ Đã sao chép' : 'Sao chép submission'}
-                </Button>
-                {selectedKeyframe.public_url && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      copyToClipboard(selectedKeyframe.public_url!, 'Đã copy Link ảnh!')
-                    }
-                  >
-                    {copyFeedback === 'Đã copy Link ảnh!' ? '✓ Đã sao chép URL' : 'Sao chép URL ảnh'}
-                  </Button>
-                )}
-                <Button variant="primary" size="sm" onClick={() => setSelectedKeyframe(null)}>
-                  Đóng
-                </Button>
-              </div>
+            {/* Next arrow */}
+            <button
+              className="lightbox-arrow lightbox-next"
+              disabled={lightboxIdx === results.length - 1}
+              onClick={() => setLightboxIdx((p) => (p !== null && p < results.length - 1 ? p + 1 : p))}
+              aria-label="Ảnh sau"
+            >
+              ›
+            </button>
+
+            {/* Footer metadata */}
+            <div className="lightbox-footer">
+              <span className="lightbox-video">{lightboxItem.video_id}</span>
+              <span className="lightbox-sep">·</span>
+              <span className="lightbox-frame">{lightboxItem.keyframe_name}</span>
+              {lightboxItem.frame_idx != null && (
+                <>
+                  <span className="lightbox-sep">·</span>
+                  <span className="lightbox-frame">Frame #{lightboxItem.frame_idx}</span>
+                </>
+              )}
+              {lightboxItem.timestamp_sec != null && (
+                <>
+                  <span className="lightbox-sep">·</span>
+                  <span className="lightbox-frame">{formatTimestamp(lightboxItem.timestamp_sec)}</span>
+                </>
+              )}
+              <span className="lightbox-counter">{lightboxIdx! + 1} / {results.length}</span>
             </div>
           </div>
         </div>

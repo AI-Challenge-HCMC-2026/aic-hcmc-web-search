@@ -80,6 +80,50 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
   ];
 
+  const searchNavItems: NavItem[] = [
+    {
+      id: 'vector-search',
+      label: 'Vector Search',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="m12 3 1.55 5.45L19 10l-5.45 1.55L12 17l-1.55-5.45L5 10l5.45-1.55L12 3Z" />
+          <path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'kis-search',
+      label: 'KIS Search',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="7" />
+          <circle cx="12" cy="12" r="2" />
+          <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+        </svg>
+      ),
+    },
+    {
+      id: 'objects-search',
+      label: 'Objects Search',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="4" y="4" width="16" height="16" rx="2" />
+          <path d="M8 9h3M8 13h8M8 17h5" />
+        </svg>
+      ),
+    },
+    {
+      id: 'fulltext-search',
+      label: 'Full Text Search',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+          <path d="M14 2v6h6M8 13h8M8 17h6" />
+        </svg>
+      ),
+    },
+  ];
+
   // Recent activity items for the history section
   const recentHistory = [
     'Deploy staging pipeline',
@@ -204,11 +248,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 width: '100%',
                 padding: '8px 12px',
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: isActive
-                  ? item.id === 'dataset' ? 'var(--bg-surface-elevated)' : 'var(--bg-surface-active)'
-                  : isHovered
-                  ? 'var(--bg-surface-subtle)'
-                  : 'transparent',
+                backgroundColor: isActive ? 'var(--bg-surface-elevated)' : isHovered ? 'var(--bg-surface-subtle)' : 'transparent',
                 color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                 fontWeight: isActive ? 500 : 400,
                 fontSize: '13.5px',
@@ -234,6 +274,57 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
       </nav>
+
+      {/* ─── Search Tools ─── */}
+      <div style={{ padding: '14px 10px 8px' }}>
+        <div style={{
+          fontSize: '11px',
+          fontWeight: 600,
+          color: 'var(--text-tertiary)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          padding: '0 12px 8px',
+        }}>
+          Search
+        </div>
+        <nav aria-label="Search tools" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          {searchNavItems.map((item) => {
+            const isActive = activeTab === item.id;
+            const isHovered = hoveredNav === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onSelectTab(item.id)}
+                onMouseEnter={() => setHoveredNav(item.id)}
+                onMouseLeave={() => setHoveredNav(null)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: isActive ? 'var(--bg-surface-elevated)' : isHovered ? 'var(--bg-surface-subtle)' : 'transparent',
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  fontWeight: isActive ? 500 : 400,
+                  fontSize: '13.5px',
+                  fontFamily: 'var(--font-sans)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', color: isActive ? 'var(--accent-terracotta)' : 'var(--text-tertiary)' }}>
+                  {item.icon}
+                </span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
 
       {/* ─── Recent History Section ─── */}
       <div style={{ padding: '16px 10px 8px', flex: 1, overflow: 'hidden' }}>
