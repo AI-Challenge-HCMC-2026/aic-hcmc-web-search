@@ -664,6 +664,13 @@ export const KisSearchPage: React.FC = () => {
                         tsquery: <code style={{ color: 'var(--accent-terracotta)', background: 'var(--accent-terracotta-subtle)', padding: '1px 6px', borderRadius: 4 }}>{ftsTsquery}</code>
                       </span>
                     )}
+                    {ftsEntities.length > 0 && (
+                      <span>
+                        Thực thể: {ftsEntities.map((ent) => (
+                          <code key={ent} style={{ color: 'var(--text-secondary)', background: 'var(--bg-surface-elevated)', padding: '1px 6px', borderRadius: 4, marginRight: 4 }}>{ent}</code>
+                        ))}
+                      </span>
+                    )}
                   </div>
 
                   {candidateVideos.length > 0 ? (
