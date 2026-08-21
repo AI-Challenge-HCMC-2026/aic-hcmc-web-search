@@ -1,0 +1,1163 @@
+/* ==========================================================================
+   KIS Search Page Styling — Transparent Multi-Stage Pipeline
+   ========================================================================== */
+
+.kis-page-container {
+  max-width: 1000px;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 44px 28px 72px;
+  color: var(--text-primary);
+}
+
+/* ─── Header ─── */
+.kis-header {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.kis-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kis-sparkle {
+  color: var(--accent-terracotta);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.kis-title-row h1 {
+  color: var(--text-primary);
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+
+.kis-subtitle {
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+/* ─── Pipeline Stepper ─── */
+.kis-stepper-card {
+  margin-top: 24px;
+  padding: 16px 20px;
+  background: #21201d;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kis-stepper-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.kis-stepper-label {
+  color: var(--accent-terracotta);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.kis-stepper-progress {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.kis-pipeline-steps {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.kis-step-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.kis-step-item.active {
+  border-color: var(--accent-terracotta);
+  background: var(--accent-terracotta-subtle);
+}
+
+.kis-step-item.completed {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.kis-step-item.pending {
+  opacity: 0.55;
+}
+
+.kis-step-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--bg-surface-elevated);
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.kis-step-item.active .kis-step-icon {
+  background: var(--accent-terracotta);
+  color: #ffffff;
+}
+
+.kis-step-item.completed .kis-step-icon {
+  background: var(--success);
+  color: #ffffff;
+}
+
+.kis-step-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.kis-step-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kis-step-desc {
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kis-step-arrow {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+/* ─── Search Command Card ─── */
+.kis-command-card {
+  margin-top: 18px;
+  padding: 20px;
+  background: #21201d;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+.kis-command-intro {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.kis-command-label {
+  color: var(--accent-terracotta);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.kis-command-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kis-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+  color: var(--text-tertiary);
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.kis-input-wrap:focus-within {
+  color: var(--accent-terracotta);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-terracotta-subtle);
+}
+
+.kis-input-wrap input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  color: var(--text-primary);
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font: 14px var(--font-sans);
+}
+
+.kis-input-wrap input::placeholder {
+  color: var(--text-muted);
+}
+
+.kis-clear-button {
+  padding: 2px 5px;
+  color: var(--text-tertiary);
+  background: transparent;
+  border: 0;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.kis-command-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kis-filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.kis-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  color: var(--text-tertiary);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+}
+
+.kis-filter select {
+  max-width: 100px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font: 500 11px var(--font-sans);
+  cursor: pointer;
+}
+
+.kis-filter select option {
+  color: var(--text-primary);
+  background: var(--bg-surface-subtle);
+}
+
+.kis-threshold-input {
+  width: 54px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font: 500 11px var(--font-mono);
+  text-align: right;
+  -moz-appearance: textfield;
+}
+
+.kis-threshold-input::-webkit-inner-spin-button,
+.kis-threshold-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.kis-threshold-input:focus {
+  color: var(--text-primary);
+}
+
+/* ─── Navigation / Stage View Filter Bar ─── */
+.kis-stage-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 24px;
+  padding-bottom: 4px;
+}
+
+.kis-nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-surface-subtle);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  overflow-x: auto;
+}
+
+.kis-nav-tab {
+  padding: 6px 14px;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.kis-nav-tab:hover {
+  color: var(--text-primary);
+}
+
+.kis-nav-tab.active {
+  background: var(--bg-surface-elevated);
+  color: var(--accent-terracotta);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+/* ─── Stage Section Cards ─── */
+.kis-stage-section {
+  margin-top: 18px;
+  padding: 22px;
+  background: #21201d;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.kis-stage-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.kis-stage-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kis-stage-eyebrow {
+  color: var(--accent-terracotta);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.kis-stage-header h2 {
+  color: var(--text-primary);
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.kis-stage-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.kis-stage-status-badge.loading {
+  color: var(--accent-terracotta);
+  border-color: var(--accent-terracotta);
+}
+
+.kis-stage-status-badge.completed {
+  color: var(--success);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.kis-stage-status-badge.pending {
+  color: var(--text-muted);
+}
+
+.kis-stage-status-badge i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.kis-stage-status-badge.loading i {
+  background: var(--accent-terracotta);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.kis-stage-status-badge.completed i {
+  background: var(--success);
+}
+
+.kis-stage-status-badge.pending i {
+  background: var(--text-muted);
+}
+
+/* ─── Stage 1 (FTS) Candidates Display ─── */
+.kis-stage1-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+.kis-stage1-videos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.kis-candidate-video-card {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: all 0.18s ease;
+}
+
+.kis-candidate-video-card:hover {
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
+}
+
+.kis-cand-thumb {
+  width: 90px;
+  min-width: 90px;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-surface-elevated);
+  position: relative;
+  cursor: pointer;
+}
+
+.kis-cand-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.kis-cand-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.kis-cand-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kis-cand-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.kis-cand-id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-terracotta);
+}
+
+.kis-cand-score {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  background: var(--accent-terracotta-subtle);
+  border-radius: var(--radius-full);
+  color: var(--accent-terracotta);
+}
+
+.kis-cand-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.kis-cand-snippet {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.kis-cand-snippet b {
+  color: var(--accent-terracotta);
+  background: rgba(218, 119, 86, 0.15);
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+/* ─── Stage 2 (Objects Search) Display ─── */
+.kis-stage2-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.kis-stage2-metrics {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.kis-extracted-objects-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.kis-obj-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: var(--accent-terracotta-subtle);
+  border: 1px solid rgba(218, 119, 86, 0.25);
+  border-radius: var(--radius-full);
+  color: var(--accent-terracotta);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.kis-stage2-view-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.kis-stage2-view-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-surface-elevated);
+  padding: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.kis-stage2-view-tab {
+  padding: 4px 10px;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.kis-stage2-view-tab.active {
+  background: var(--bg-sidebar);
+  color: var(--accent-terracotta);
+  font-weight: 600;
+}
+
+/* ─── Video Keyframe Groups in Stage 2 ─── */
+.kis-video-groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.kis-group-card {
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color 0.18s ease;
+}
+
+.kis-group-card:hover {
+  border-color: var(--border-focus);
+}
+
+.kis-group-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-surface-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.kis-group-card-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.kis-group-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.kis-group-kf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.kis-kf-item {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-elevated);
+  transition: all 0.18s ease;
+  cursor: pointer;
+}
+
+.kis-kf-item:hover {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px var(--accent-terracotta-subtle);
+  transform: translateY(-2px);
+}
+
+.kis-kf-item img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--bg-sidebar);
+}
+
+.kis-kf-meta {
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kis-kf-video {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kis-kf-frame {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.kis-kf-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: var(--radius-full);
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  backdrop-filter: blur(4px);
+}
+
+.kis-expand-btn {
+  margin: 10px 14px 14px;
+  padding: 6px 14px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--accent-terracotta);
+  font: 500 11.5px var(--font-sans);
+  cursor: pointer;
+  align-self: flex-start;
+  transition: all 0.15s ease;
+}
+
+.kis-expand-btn:hover {
+  background: var(--bg-surface-active);
+  border-color: var(--accent-terracotta);
+}
+
+/* ─── Flat Grid for Stage 2 ─── */
+.kis-flat-kf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  gap: 10px;
+}
+
+.kis-stage2-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.kis-stage2-pagination button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  color: var(--text-secondary);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font: 500 11.5px var(--font-sans);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kis-stage2-pagination button:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--bg-surface-active);
+  border-color: var(--border-focus);
+}
+
+.kis-stage2-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.kis-stage2-pagination-info {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+/* ─── Stage 3 (VLM Verification) Card ─── */
+.kis-stage3-card {
+  padding: 18px;
+  background: var(--bg-sidebar);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.kis-stage3-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--accent-terracotta-subtle);
+  color: var(--accent-terracotta);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.kis-stage3-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kis-stage3-content h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.kis-stage3-content p {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* ─── Empty & Ready State ─── */
+.kis-empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 44px 20px;
+  text-align: center;
+}
+
+.kis-empty-icon {
+  width: 54px;
+  height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  color: var(--accent-terracotta);
+  background: var(--accent-terracotta-subtle);
+  border-radius: 17px;
+  font-size: 25px;
+}
+
+.kis-empty-state h3 {
+  color: var(--text-primary);
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 500;
+}
+
+.kis-empty-state p {
+  max-width: 520px;
+  margin-top: 8px;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.kis-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.kis-suggestions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  font: 12px var(--font-sans);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kis-suggestions button:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-active);
+  border-color: var(--border-focus);
+}
+
+.kis-suggestions button span {
+  color: var(--accent-terracotta);
+}
+
+.kis-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(70px, 1fr));
+  gap: 8px;
+  width: min(560px, 100%);
+  margin-top: 24px;
+  opacity: 0.6;
+}
+
+.kis-preview-grid span {
+  aspect-ratio: 16 / 9;
+  display: block;
+  background: linear-gradient(135deg, var(--bg-sidebar), var(--bg-surface-elevated));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Skeleton Loading ─── */
+.kis-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  padding-top: 10px;
+}
+
+.kis-skeleton-item {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-sidebar);
+}
+
+.kis-skeleton-img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(90deg, var(--bg-surface-elevated) 25%, var(--bg-surface-active) 50%, var(--bg-surface-elevated) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.kis-skeleton-meta {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kis-skeleton-line {
+  height: 10px;
+  border-radius: 4px;
+  background: var(--bg-surface-elevated);
+}
+
+.kis-skeleton-line.short {
+  width: 60%;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ─── Lightbox ─── */
+.kis-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(14, 14, 12, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.kis-lightbox-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 92vw;
+  max-height: 92vh;
+  gap: 14px;
+  animation: fadeInScale 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.kis-lightbox-img {
+  max-width: min(1100px, 88vw);
+  max-height: 78vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.1);
+  background: var(--bg-sidebar);
+}
+
+.kis-lightbox-close {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.kis-lightbox-close:hover {
+  background: var(--bg-surface-active);
+  color: var(--text-primary);
+  border-color: var(--accent-terracotta);
+  transform: scale(1.08);
+}
+
+.kis-lightbox-arrow {
+  position: absolute;
+  top: 45%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(41, 40, 37, 0.85);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 10;
+  backdrop-filter: blur(6px);
+  transition: all 0.18s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.kis-lightbox-arrow:hover:not(:disabled) {
+  background: var(--bg-surface-active);
+  border-color: var(--accent-terracotta);
+  color: var(--accent-terracotta);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.kis-lightbox-arrow:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.kis-lightbox-prev { left: -22px; }
+.kis-lightbox-next { right: -22px; }
+
+.kis-lightbox-footer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: rgba(33, 32, 29, 0.9);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  font-size: 12.5px;
+}
+
+.kis-lightbox-video {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.kis-lightbox-frame {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+.kis-lightbox-counter {
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid var(--border-subtle);
+  color: var(--accent-terracotta);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .kis-pipeline-steps {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .kis-step-arrow {
+    display: none;
+  }
+  .kis-stage1-videos-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .kis-page-container {
+    padding: 28px 16px 48px;
+  }
+  .kis-command-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .kis-command-controls .ui-button {
+    width: 100%;
+  }
+  .kis-stage-header {
+    flex-direction: column;
+  }
+  .kis-group-card-header {
+    flex-direction: column;
+  }
+  .kis-stage2-view-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .kis-lightbox-arrow {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+  }
+  .kis-lightbox-prev { left: 4px; }
+  .kis-lightbox-next { right: 4px; }
+  .kis-lightbox-close { top: -10px; right: -10px; }
+  .kis-lightbox-footer { flex-wrap: wrap; justify-content: center; font-size: 11px; }
+}

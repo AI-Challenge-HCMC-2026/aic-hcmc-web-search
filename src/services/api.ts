@@ -19,13 +19,13 @@ export interface KeyframeItem {
   public_url: string | null;
 }
 
-/* ─── Object Search Types ─── */
-
 export interface GeminiConfig {
   api_key?: string | null;
   model?: string;
   base_url?: string | null;
 }
+
+/* ─── Object Search Types ─── */
 
 export interface MultiObjectSearchRequest {
   video_id: string;
@@ -46,32 +46,76 @@ export interface MultiObjectSearchResponse {
   items: KeyframeItem[];
 }
 
-/* ─── Object Vocabulary Types ─── */
-
 export interface VocabularyItem {
   class_name: string;
   class_entity: string;
 }
 
-/* ─── Tree Types ─── */
+/* ─── Full-Text Search Types ─── */
 
-export interface VideoTreeNode {
-  id: string;
-  name: string;
-  type: 'video';
-  title?: string | null;
-  video_path?: string | null;
-  thumbnail_url?: string | null;
-  keyframe_count: number;
+export interface FullTextSearchItem {
+  video_id: string;
+  title: string | null;
+  description: string | null;
+  thumbnail_url: string | null;
+  video_path: string | null;
+  score: number;
+  matched_headline: string | null;
 }
 
-export interface CollectionTreeNode {
-  id: string;
-  name: string;
-  type: 'collection';
-  total_videos: number;
-  total_keyframes: number;
-  children: VideoTreeNode[];
+export interface FullTextSearchRequest {
+  query: string;
+  gemini_config?: GeminiConfig | null;
+  limit?: number;
+  offset?: number;
+}
+
+export interface FullTextSearchResponse {
+  total: number;
+  limit: number;
+  offset: number;
+  query: string;
+  optimized_tsquery: string | null;
+  extracted_entities: string[] | null;
+  items: FullTextSearchItem[];
+}
+
+/* ─── KIS Verification Types ─── */
+
+export interface VLMConfig {
+  base_url: string;
+  api_key?: string;
+  model: string;
+  temperature?: number;
+  max_concurrency?: number;
+  timeout_seconds?: number;
+}
+
+export interface VerifiedKeyframeItem {
+  keyframe_id: number;
+  video_id: string;
+  image_url: string | null;
+  is_matched: boolean;
+  confidence: number;
+  reason: string;
+}
+
+export interface KISSearchRequest {
+  query: string;
+  vlm_config: VLMConfig;
+  candidate_keyframe_ids?: number[] | null;
+  video_id?: string | null;
+  min_confidence?: number;
+  limit?: number;
+  offset?: number;
+}
+
+export interface KISSearchResponse {
+  total_candidates: number;
+  total_matched: number;
+  limit: number;
+  offset: number;
+  items: VerifiedKeyframeItem[];
 }
 
 /* ─── API Functions ─── */
@@ -93,8 +137,7 @@ export async function fetchObjectVocabulary(
 }
 
 /**
- * Search keyframes by objects extracted from a natural language query
- * within a specific video (POST). Gemini auto-extracts object entities.
+ * Search keyframes by objects extracted from query within a specific video (POST).
  */
 export async function searchByObjects(
   body: MultiObjectSearchRequest,
@@ -114,17 +157,42 @@ export async function searchByObjects(
 }
 
 /**
- * Fetch the collection / video directory tree.
+ * Execute weighted PostgreSQL Full-Text Search across video transcripts,
+ * title, description, and keywords.
  */
-export async function fetchCollectionTree(
-  videoLimit?: number,
+export async function searchFullText(
+  body: FullTextSearchRequest,
   signal?: AbortSignal,
-): Promise<CollectionTreeNode[]> {
-  const params = new URLSearchParams();
-  if (videoLimit !== undefined) params.set('video_limit', String(videoLimit));
-
-  const res = await fetch(`${API_BASE_URL}/tree?${params}`, { signal });
-  if (!res.ok) throw new Error(`Tree request failed: ${res.status}`);
+): Promise<FullTextSearchResponse> {
+  const res = await fetch(`${API_BASE_URL}/search/full-text-search`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(text || `Full-text search request failed: ${res.status}`);
+  }
   return res.json();
 }
 
+/**
+ * Known-Item Search (KIS) visual verification with VLM.
+ */
+export async function searchKisVerification(
+  body: KISSearchRequest,
+  signal?: AbortSignal,
+): Promise<KISSearchResponse> {
+  const res = await fetch(`${API_BASE_URL}/search/kis-search`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(text || `KIS verification request failed: ${res.status}`);
+  }
+  return res.json();
+}

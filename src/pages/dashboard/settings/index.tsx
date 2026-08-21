@@ -3,26 +3,36 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Select, type SelectOption } from '../../../components/ui/Select';
 import { Switch } from '../../../components/ui/Switch';
+import { getStoredSettings, saveStoredSettings } from '../../../services/settings';
 import './index.css';
 
 export const SettingsPage: React.FC = () => {
-  const [apiKey, setApiKey] = useState('AIzaSyDu829_xK91LmP880214aB');
-  const [selectedModel, setSelectedModel] = useState('gemini-3.1-flash-lite');
-  const [enableReasoning, setEnableReasoning] = useState(true);
-  const [enableMcp, setEnableMcp] = useState(true);
+  const initial = getStoredSettings();
+  const [apiKey, setApiKey] = useState(initial.apiKey);
+  const [selectedModel, setSelectedModel] = useState(initial.model);
+  const [enableReasoning, setEnableReasoning] = useState(initial.enableReasoning);
+  const [enableMcp, setEnableMcp] = useState(initial.enableMcp);
   const [isSaving, setIsSaving] = useState(false);
   const [showSavedToast, setShowSavedToast] = useState(false);
 
   const modelOptions: SelectOption[] = [
-    { value: 'gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash Lite', badge: 'Mặc định' },
+    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', badge: 'Khuyên dùng' },
+    { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
+    { value: 'gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash Lite' },
     { value: 'gemini-3.0-flash', label: 'Gemini 3.0 Flash' },
     { value: 'gemini-3.0-pro', label: 'Gemini 3.0 Pro', badge: 'Mạnh mẽ' },
-    { value: 'claude-3-7-sonnet', label: 'Claude 3.7 Sonnet' },
   ];
 
   const handleSave = () => {
     setIsSaving(true);
     setShowSavedToast(false);
+
+    saveStoredSettings({
+      apiKey,
+      model: selectedModel,
+      enableReasoning,
+      enableMcp,
+    });
 
     setTimeout(() => {
       setIsSaving(false);
@@ -31,7 +41,7 @@ export const SettingsPage: React.FC = () => {
       setTimeout(() => {
         setShowSavedToast(false);
       }, 3500);
-    }, 600);
+    }, 400);
   };
 
   return (
