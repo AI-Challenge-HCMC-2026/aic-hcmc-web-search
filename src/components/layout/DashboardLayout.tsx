@@ -7,6 +7,8 @@ export interface DashboardLayoutProps {
   onSelectTab: (tabId: string) => void;
   onLogout?: () => void;
   userName?: string;
+  userEmail?: string;
+  userAvatar?: string;
   userPlan?: string;
 }
 
@@ -16,6 +18,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   onSelectTab,
   onLogout,
   userName,
+  userEmail,
+  userAvatar,
   userPlan,
 }) => {
   return (
@@ -35,6 +39,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         onSelectTab={onSelectTab}
         onLogout={onLogout}
         userName={userName}
+        userEmail={userEmail}
+        userAvatar={userAvatar}
         userPlan={userPlan}
       />
 

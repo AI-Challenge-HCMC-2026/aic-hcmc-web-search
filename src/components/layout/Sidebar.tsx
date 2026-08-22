@@ -11,6 +11,8 @@ export interface SidebarProps {
   onSelectTab: (tabId: string) => void;
   onLogout?: () => void;
   userName?: string;
+  userEmail?: string;
+  userAvatar?: string;
   userPlan?: string;
 }
 
@@ -18,7 +20,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onSelectTab,
   onLogout,
-  userName = 'Phú Nguyễn',
+  userName = 'User',
+  userEmail,
+  userAvatar,
   userPlan = 'Free Plan',
 }) => {
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
@@ -382,25 +386,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
           {/* Avatar */}
-          <div
-            style={{
-              width: '30px',
-              height: '30px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--bg-surface-active)',
-              backgroundImage: 'linear-gradient(135deg, var(--bg-surface-elevated) 0%, var(--bg-surface-subtle) 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 600,
-              fontSize: '12px',
-              color: 'var(--text-secondary)',
-              border: '1px solid var(--border-subtle)',
-              flexShrink: 0,
-            }}
-          >
-            P
-          </div>
+          {userAvatar ? (
+            <img
+              src={userAvatar}
+              alt={userName}
+              referrerPolicy="no-referrer"
+              style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '1px solid var(--border-subtle)',
+                flexShrink: 0,
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--bg-surface-active)',
+                backgroundImage: 'linear-gradient(135deg, var(--bg-surface-elevated) 0%, var(--bg-surface-subtle) 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 600,
+                fontSize: '12px',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-subtle)',
+                flexShrink: 0,
+              }}
+            >
+              {userName.charAt(0).toUpperCase()}
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <span
               style={{
@@ -411,11 +431,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
               }}
+              title={userEmail || userName}
             >
               {userName}
             </span>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              {userPlan}
+            <span
+              style={{
+                fontSize: '11px',
+                color: 'var(--text-muted)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+              title={userEmail || userPlan}
+            >
+              {userEmail || userPlan}
             </span>
           </div>
         </div>
