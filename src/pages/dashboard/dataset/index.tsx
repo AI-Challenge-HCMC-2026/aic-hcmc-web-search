@@ -21,8 +21,8 @@ const formatTimestamp = (seconds?: number | null) => {
 const getVideoLabel = (video: VideoTreeNode) => video.title?.trim() || video.name;
 
 const getApiError = (error: unknown, fallback: string): string => {
-  if (error instanceof TypeError) return 'Không thể kết nối tới máy chủ dữ liệu nội bộ (kiểm tra CORS hoặc kết nối ngrok).';
   if (error instanceof Error && error.message) return error.message;
+  if (error instanceof TypeError) return 'Không thể kết nối tới máy chủ dữ liệu nội bộ (kiểm tra kết nối URL hoặc CORS).';
   return fallback;
 };
 

@@ -25,6 +25,7 @@ export const Input: React.FC<InputProps> = ({
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isHoveredToggle, setIsHoveredToggle] = useState(false);
   const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
   const effectiveType = isPasswordToggleable
@@ -91,7 +92,7 @@ export const Input: React.FC<InputProps> = ({
               ? '1px solid var(--border-focus)'
               : '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-md, 12px)',
-            padding: isPasswordToggleable ? '0 64px 0 14px' : '0 14px',
+            padding: isPasswordToggleable ? '0 38px 0 14px' : '0 14px',
             color: 'var(--text-primary)',
             fontSize: '13.5px',
             fontFamily: 'var(--font-sans)',
@@ -105,33 +106,72 @@ export const Input: React.FC<InputProps> = ({
           {...props}
         />
 
-        {/* Toggle Password Visibility */}
+        {/* Minimalist Claude-Style Password Visibility Toggle Button */}
         {isPasswordToggleable && (
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
+            onMouseEnter={() => setIsHoveredToggle(true)}
+            onMouseLeave={() => setIsHoveredToggle(false)}
             disabled={disabled}
             style={{
               position: 'absolute',
               right: '8px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '28px',
               height: '28px',
-              padding: '0 10px',
-              backgroundColor: 'var(--bg-surface-elevated)',
-              border: '1px solid var(--border-subtle)',
+              padding: 0,
+              backgroundColor: isHoveredToggle ? 'rgba(255, 255, 255, 0.07)' : 'transparent',
+              border: 'none',
               borderRadius: '6px',
-              color: 'var(--text-secondary)',
-              fontSize: '12px',
-              fontWeight: 500,
-              cursor: 'pointer',
+              color: isHoveredToggle ? 'var(--text-primary)' : 'var(--text-tertiary)',
+              cursor: disabled ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               userSelect: 'none',
               transition: 'background-color 0.15s ease, color 0.15s ease',
+              outline: 'none',
             }}
             aria-label={showPassword ? 'Hide password' : 'Show password'}
+            title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
           >
-            {showPassword ? 'Ẩn' : 'Hiện'}
+            {showPassword ? (
+              /* Eye-Off Icon (When password is visible, clicking will hide) */
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                <line x1="2" x2="22" y1="2" y2="22" />
+              </svg>
+            ) : (
+              /* Eye Icon (When password is hidden, clicking will show) */
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            )}
           </button>
         )}
       </div>
