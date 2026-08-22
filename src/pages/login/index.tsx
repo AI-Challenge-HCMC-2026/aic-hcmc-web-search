@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import './index.css';
 
 export interface LoginPageProps {
@@ -6,29 +7,33 @@ export interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
+  const { signInWithGoogle, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleGoogleSignIn = () => {
+  // If user is already logged in, notify parent
+  React.useEffect(() => {
+    if (user && onLoginSuccess) {
+      onLoginSuccess();
+    }
+  }, [user, onLoginSuccess]);
+
+  const handleGoogleSignIn = async () => {
     if (isLoading) return;
     setIsLoading(true);
-    setStatusMessage('Connecting to Google Identity Services...');
+    setErrorMessage(null);
+    setStatusMessage('Đang kết nối tới Google Identity Services...');
 
-    // Simulate enterprise SSO auth cycle
-    setTimeout(() => {
-      setStatusMessage('Verifying security credentials...');
-    }, 1200);
-
-    setTimeout(() => {
-      setStatusMessage('Redirecting to workspace...');
-      setTimeout(() => {
-        setIsLoading(false);
-        setStatusMessage('');
-        if (onLoginSuccess) {
-          onLoginSuccess();
-        }
-      }, 1800);
-    }, 2500);
+    try {
+      await signInWithGoogle();
+      setStatusMessage('Đang chuyển hướng tới tài khoản Google...');
+    } catch (err: unknown) {
+      setIsLoading(false);
+      setStatusMessage('');
+      const message = err instanceof Error ? err.message : 'Đăng nhập Google thất bại. Vui lòng kiểm tra cấu hình Supabase.';
+      setErrorMessage(message);
+    }
   };
 
   return (
@@ -86,14 +91,36 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             </button>
 
             {/* Live Status Feedback Message */}
-            <div 
-              id="status-feedback" 
-              className={`status-feedback ${statusMessage ? 'is-visible' : ''}`}
-              role="status" 
-              aria-live="polite"
-            >
-              {statusMessage}
-            </div>
+            {statusMessage && (
+              <div 
+                id="status-feedback" 
+                className="status-feedback is-visible"
+                role="status" 
+                aria-live="polite"
+              >
+                {statusMessage}
+              </div>
+            )}
+
+            {/* Error Message */}
+            {errorMessage && (
+              <div
+                style={{
+                  marginTop: '14px',
+                  padding: '10px 12px',
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '0.8rem',
+                  color: '#f87171',
+                  textAlign: 'center',
+                  lineHeight: '1.4',
+                }}
+                role="alert"
+              >
+                {errorMessage}
+              </div>
+            )}
 
           </section>
 
