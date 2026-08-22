@@ -1,11 +1,10 @@
 /**
  * API client utility for AIC HCMC Search Engine.
  *
- * Uses the native fetch API. Base URL is read from the VITE_API_BASE_URL
- * environment variable defined in .env.
+ * Uses the native fetch API. Base URL is dynamically retrieved from
+ * user settings in localStorage (fallback to VITE_API_BASE_URL defined in .env).
  */
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000/api/v1').replace(/\/$/, '');
+import { getBackendBaseUrl } from './settings';
 
 /**
  * Universal fetch wrapper that automatically injects headers such as
@@ -179,10 +178,11 @@ export async function fetchCollectionTree(
   videoLimit?: number,
   signal?: AbortSignal,
 ): Promise<CollectionTreeNode[]> {
+  const baseUrl = getBackendBaseUrl();
   const params = new URLSearchParams();
   if (videoLimit !== undefined) params.set('video_limit', String(videoLimit));
 
-  const res = await apiFetch(`${API_BASE_URL}/tree?${params}`, { signal });
+  const res = await apiFetch(`${baseUrl}/tree?${params}`, { signal });
   if (!res.ok) throw new Error(`Không thể tải thư viện dữ liệu (${res.status}).`);
   return res.json();
 }
@@ -196,8 +196,9 @@ export async function fetchVideoKeyframes(
   limit: number = 24,
   signal?: AbortSignal,
 ): Promise<PaginatedKeyframesResponse> {
+  const baseUrl = getBackendBaseUrl();
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-  const res = await apiFetch(`${API_BASE_URL}/videos/${encodeURIComponent(videoId)}/keyframes?${params}`, { signal });
+  const res = await apiFetch(`${baseUrl}/videos/${encodeURIComponent(videoId)}/keyframes?${params}`, { signal });
   if (!res.ok) throw new Error(`Không thể tải keyframe (${res.status}).`);
   return res.json();
 }
@@ -210,10 +211,11 @@ export async function fetchObjectVocabulary(
   limit: number = 50,
   signal?: AbortSignal,
 ): Promise<VocabularyItem[]> {
+  const baseUrl = getBackendBaseUrl();
   const params = new URLSearchParams({ limit: String(limit) });
   if (query) params.set('query', query);
 
-  const res = await apiFetch(`${API_BASE_URL}/keyframes/objects/vocabulary?${params}`, { signal });
+  const res = await apiFetch(`${baseUrl}/keyframes/objects/vocabulary?${params}`, { signal });
   if (!res.ok) throw new Error(`Vocabulary request failed: ${res.status}`);
   return res.json();
 }
@@ -225,7 +227,8 @@ export async function searchByObjects(
   body: MultiObjectSearchRequest,
   signal?: AbortSignal,
 ): Promise<MultiObjectSearchResponse> {
-  const res = await apiFetch(`${API_BASE_URL}/keyframes/search-by-objects`, {
+  const baseUrl = getBackendBaseUrl();
+  const res = await apiFetch(`${baseUrl}/keyframes/search-by-objects`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -246,7 +249,8 @@ export async function searchFullText(
   body: FullTextSearchRequest,
   signal?: AbortSignal,
 ): Promise<FullTextSearchResponse> {
-  const res = await apiFetch(`${API_BASE_URL}/search/full-text-search`, {
+  const baseUrl = getBackendBaseUrl();
+  const res = await apiFetch(`${baseUrl}/search/full-text-search`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -266,7 +270,8 @@ export async function searchKisVerification(
   body: KISSearchRequest,
   signal?: AbortSignal,
 ): Promise<KISSearchResponse> {
-  const res = await apiFetch(`${API_BASE_URL}/search/kis-search`, {
+  const baseUrl = getBackendBaseUrl();
+  const res = await apiFetch(`${baseUrl}/search/kis-search`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
