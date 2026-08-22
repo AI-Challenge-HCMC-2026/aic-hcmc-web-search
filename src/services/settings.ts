@@ -1,7 +1,8 @@
 import type { GeminiConfig } from './api';
+import { supabase } from '../lib/supabase';
 
 export interface UserSettings {
-  // Backend API Base URL Configuration (Required, must be configured by user)
+  // Backend API Base URL Configuration (Must be configured by user in Settings)
   backendBaseUrl: string;
 
   // Gemini Configuration
@@ -16,6 +17,20 @@ export interface UserSettings {
   // System & Integration Toggles
   enableReasoning: boolean;
   enableMcp: boolean;
+}
+
+export interface UserSettingsSupabaseRow {
+  user_id: string;
+  backend_base_url: string;
+  gemini_apikey: string;
+  selected_gemini_model: string;
+  custom_models_baseurl: string;
+  custom_models_apikey: string;
+  custom_models_id: string;
+  enable_reasoning: boolean;
+  enable_mcps: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const STORAGE_KEYS = {
@@ -135,6 +150,71 @@ export function getBackendBaseUrl(): string {
     throw new Error('Chưa cấu hình Backend Base URL. Vui lòng vào Cài đặt (Settings) để nhập địa chỉ máy chủ API backend trước khi tiếp tục.');
   }
   return raw.replace(/\/$/, '');
+}
+
+/**
+ * Fetch settings from Supabase table `user_settings` and update local cache.
+ */
+export async function fetchSettingsFromSupabase(userId: string): Promise<UserSettings | null> {
+  try {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Could not fetch settings from Supabase:', error.message);
+      return null;
+    }
+
+    if (data) {
+      const remoteSettings: UserSettings = {
+        backendBaseUrl: data.backend_base_url ?? '',
+        apiKey: data.gemini_apikey ?? '',
+        model: data.selected_gemini_model || DEFAULT_SETTINGS.model,
+        customBaseUrl: data.custom_models_baseurl ?? '',
+        customApiKey: data.custom_models_apikey ?? '',
+        customModel: data.custom_models_id ?? '',
+        enableReasoning: data.enable_reasoning ?? DEFAULT_SETTINGS.enableReasoning,
+        enableMcp: data.enable_mcps ?? DEFAULT_SETTINGS.enableMcp,
+      };
+      saveStoredSettings(remoteSettings);
+      return remoteSettings;
+    }
+    return null;
+  } catch (err) {
+    console.warn('Error fetching Supabase settings:', err);
+    return null;
+  }
+}
+
+/**
+ * Save settings to Supabase table `user_settings` for the current user.
+ */
+export async function saveSettingsToSupabase(userId: string, settings: UserSettings): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('user_settings')
+      .upsert({
+        user_id: userId,
+        backend_base_url: settings.backendBaseUrl.trim(),
+        gemini_apikey: settings.apiKey.trim(),
+        selected_gemini_model: settings.model.trim() || DEFAULT_SETTINGS.model,
+        custom_models_baseurl: settings.customBaseUrl.trim(),
+        custom_models_apikey: settings.customApiKey.trim(),
+        custom_models_id: settings.customModel.trim(),
+        enable_reasoning: settings.enableReasoning,
+        enable_mcps: settings.enableMcp,
+        updated_at: new Date().toISOString(),
+      });
+
+    if (error) {
+      console.error('Error saving settings to Supabase:', error.message);
+    }
+  } catch (err) {
+    console.error('Failed to sync settings with Supabase:', err);
+  }
 }
 
 /**

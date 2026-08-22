@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Select, type SelectOption } from '../../../components/ui/Select';
@@ -6,11 +7,15 @@ import { Switch } from '../../../components/ui/Switch';
 import {
   getStoredSettings,
   saveStoredSettings,
+  fetchSettingsFromSupabase,
+  saveSettingsToSupabase,
   GEMINI_AVAILABLE_MODELS,
+  type UserSettings,
 } from '../../../services/settings';
 import './index.css';
 
 export const SettingsPage: React.FC = () => {
+  const { user } = useAuth();
   const initial = getStoredSettings();
 
   // Backend API Base URL state (purely user-provided)
@@ -32,14 +37,32 @@ export const SettingsPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [showSavedToast, setShowSavedToast] = useState(false);
 
+  // Synchronize settings with Supabase if logged in
+  useEffect(() => {
+    if (user?.id) {
+      fetchSettingsFromSupabase(user.id).then((remote) => {
+        if (remote) {
+          setBackendBaseUrl(remote.backendBaseUrl);
+          setApiKey(remote.apiKey);
+          setSelectedModel(remote.model);
+          setCustomBaseUrl(remote.customBaseUrl);
+          setCustomApiKey(remote.customApiKey);
+          setCustomModel(remote.customModel);
+          setEnableReasoning(remote.enableReasoning);
+          setEnableMcp(remote.enableMcp);
+        }
+      });
+    }
+  }, [user?.id]);
+
   // Restricted Gemini model options: Only gemini-3.1-flash-lite and gemini-3.5-flash-lite
   const geminiOptions: SelectOption[] = [...GEMINI_AVAILABLE_MODELS];
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
     setShowSavedToast(false);
 
-    saveStoredSettings({
+    const newSettings: UserSettings = {
       backendBaseUrl,
       apiKey,
       model: selectedModel,
@@ -48,7 +71,13 @@ export const SettingsPage: React.FC = () => {
       customModel,
       enableReasoning,
       enableMcp,
-    });
+    };
+
+    saveStoredSettings(newSettings);
+
+    if (user?.id) {
+      await saveSettingsToSupabase(user.id, newSettings);
+    }
 
     setTimeout(() => {
       setIsSaving(false);
@@ -85,12 +114,9 @@ export const SettingsPage: React.FC = () => {
           {!isBackendConfigured && (
             <div
               style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '10px',
                 padding: '12px 14px',
-                backgroundColor: 'rgba(218, 119, 86, 0.12)',
-                border: '1px solid rgba(218, 119, 86, 0.35)',
+                backgroundColor: 'rgba(218, 119, 86, 0.1)',
+                border: '1px solid rgba(218, 119, 86, 0.3)',
                 borderRadius: 'var(--radius-sm, 8px)',
                 fontSize: '13px',
                 color: 'var(--text-primary)',
@@ -98,15 +124,12 @@ export const SettingsPage: React.FC = () => {
               }}
               role="alert"
             >
-              <span style={{ color: 'var(--accent-terracotta)', fontSize: '15px', flexShrink: 0, marginTop: '1px' }}>
-                ⚠️
-              </span>
-              <div>
-                <strong style={{ color: 'var(--accent-terracotta)', display: 'block', marginBottom: '2px' }}>
-                  Chưa cấu hình Backend Base URL
-                </strong>
+              <strong style={{ color: 'var(--accent-terracotta)', display: 'block', marginBottom: '3px' }}>
+                Chưa cấu hình Backend Base URL
+              </strong>
+              <span>
                 Bạn cần nhập địa chỉ API máy chủ backend vào ô bên dưới và nhấn <strong>Lưu cấu hình</strong> để hệ thống có thể kết nối và tải dữ liệu.
-              </div>
+              </span>
             </div>
           )}
 
@@ -126,7 +149,7 @@ export const SettingsPage: React.FC = () => {
                 </>
               ) : undefined
             }
-            helperText="Địa chỉ gốc của API backend. Hệ thống chỉ lấy URL từ cài đặt này và không tự động fallback."
+            helperText="Địa chỉ gốc của API backend. Hệ thống chỉ lấy URL từ cài đặt này và đồng bộ với cơ sở dữ liệu Supabase."
           />
         </div>
       </section>
@@ -263,7 +286,7 @@ export const SettingsPage: React.FC = () => {
             <svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
-            <span>Đã lưu cấu hình thành công!</span>
+            <span>Đã lưu cấu hình và đồng bộ Supabase thành công!</span>
           </div>
         )}
 
