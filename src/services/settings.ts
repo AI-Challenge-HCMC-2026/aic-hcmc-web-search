@@ -49,8 +49,10 @@ export const GEMINI_AVAILABLE_MODELS = [
   { value: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash Lite' },
 ] as const;
 
+export const DEFAULT_BACKEND_URL = 'https://opossum-excuse-spinning.ngrok-free.dev/api/v1';
+
 export const DEFAULT_SETTINGS: UserSettings = {
-  backendBaseUrl: '',
+  backendBaseUrl: DEFAULT_BACKEND_URL,
   apiKey: 'AQ.Ab8RN6KtvDj5lXE8G6oGfQh-HuvMdjlf4XJF3vq4GVLBKFMSvA',
   model: 'gemini-3.1-flash-lite',
   customBaseUrl: '',
@@ -65,13 +67,16 @@ export const DEFAULT_SETTINGS: UserSettings = {
  */
 export function getStoredSettings(): UserSettings {
   try {
-    const backendBaseUrl = localStorage.getItem(STORAGE_KEYS.BACKEND_BASE_URL) ?? '';
+    const rawBackendBaseUrl = localStorage.getItem(STORAGE_KEYS.BACKEND_BASE_URL);
+    const backendBaseUrl = rawBackendBaseUrl !== null && rawBackendBaseUrl.trim().length > 0
+      ? rawBackendBaseUrl
+      : DEFAULT_SETTINGS.backendBaseUrl;
     const apiKey = localStorage.getItem(STORAGE_KEYS.API_KEY) ?? DEFAULT_SETTINGS.apiKey;
     
     // Ensure model is one of the 2 valid Gemini models if not set properly
     const rawModel = localStorage.getItem(STORAGE_KEYS.MODEL);
     const validGeminiModels = GEMINI_AVAILABLE_MODELS.map((m) => m.value);
-    const model = rawModel && validGeminiModels.includes(rawModel as any)
+    const model = rawModel && validGeminiModels.includes(rawModel as (typeof validGeminiModels)[number])
       ? rawModel
       : DEFAULT_SETTINGS.model;
 
@@ -140,16 +145,29 @@ export function isBackendConfigured(): boolean {
 }
 
 /**
- * Get the active backend API base URL directly from user settings.
- * Throws a clear descriptive error if the user has not configured it yet.
+ * Get the active backend API base URL from settings or environment.
+ * Fallback to DEFAULT_BACKEND_URL.
  */
 export function getBackendBaseUrl(): string {
   const settings = getStoredSettings();
   const raw = settings.backendBaseUrl?.trim();
-  if (!raw) {
-    throw new Error('Chưa cấu hình Backend Base URL. Vui lòng vào Cài đặt (Settings) để nhập địa chỉ máy chủ API backend trước khi tiếp tục.');
+  const globalObj = typeof globalThis !== 'undefined' ? (globalThis as unknown as { process?: { env?: Record<string, string> } }) : undefined;
+  const metaEnv = typeof import.meta !== 'undefined' ? (import.meta as unknown as { env?: Record<string, string> })?.env : undefined;
+  const envUrl =
+    metaEnv?.VITE_API_BASE_URL ||
+    metaEnv?.VITE_API_URL ||
+    globalObj?.process?.env?.NEXT_PUBLIC_API_URL ||
+    globalObj?.process?.env?.VITE_API_BASE_URL;
+
+  const candidate = (raw || envUrl || DEFAULT_BACKEND_URL).trim();
+  let clean = candidate.replace(/\/+$/, '');
+
+  // If only the ngrok domain without /api/v1 is provided, ensure /api/v1 is present
+  if (clean === 'https://opossum-excuse-spinning.ngrok-free.dev') {
+    clean = 'https://opossum-excuse-spinning.ngrok-free.dev/api/v1';
   }
-  return raw.replace(/\/$/, '');
+
+  return clean;
 }
 
 /**

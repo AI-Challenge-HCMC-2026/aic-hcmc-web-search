@@ -7,10 +7,10 @@ import ChatsPage from './pages/dashboard/chats';
 import McpToolsPage from './pages/dashboard/mcp-tools';
 import ApiDocsPage from './pages/dashboard/api-docs';
 import DatasetPage from './pages/dashboard/dataset';
-import VectorSearchPage from './pages/dashboard/vector-search';
+import VideoSearchPage from './pages/dashboard/video-search';
+import KeyframeSearchPage from './pages/dashboard/keyframe-search';
 import KisSearchPage from './pages/dashboard/kis-search';
 import ObjectsSearchPage from './pages/dashboard/objects-search';
-import FulltextSearchPage from './pages/dashboard/fulltext-search';
 
 type DashboardTab =
   | 'chats'
@@ -18,10 +18,10 @@ type DashboardTab =
   | 'api-docs'
   | 'settings'
   | 'dataset'
-  | 'vector-search'
+  | 'video-search'
+  | 'keyframe-search'
   | 'kis-search'
-  | 'objects-search'
-  | 'fulltext-search';
+  | 'objects-search';
 
 const dashboardTabs: DashboardTab[] = [
   'chats',
@@ -29,10 +29,10 @@ const dashboardTabs: DashboardTab[] = [
   'api-docs',
   'settings',
   'dataset',
-  'vector-search',
+  'video-search',
+  'keyframe-search',
   'kis-search',
   'objects-search',
-  'fulltext-search',
 ];
 
 const isDashboardTab = (value: string): value is DashboardTab =>
@@ -177,10 +177,10 @@ const AppContent: React.FC = () => {
       {activeTab === 'mcp-tools' && <McpToolsPage />}
       {activeTab === 'api-docs' && <ApiDocsPage />}
       {activeTab === 'dataset' && <DatasetPage />}
-      {activeTab === 'vector-search' && <VectorSearchPage />}
+      {activeTab === 'video-search' && <VideoSearchPage />}
+      {activeTab === 'keyframe-search' && <KeyframeSearchPage />}
       {activeTab === 'kis-search' && <KisSearchPage />}
       {activeTab === 'objects-search' && <ObjectsSearchPage />}
-      {activeTab === 'fulltext-search' && <FulltextSearchPage />}
     </DashboardLayout>
   );
 };

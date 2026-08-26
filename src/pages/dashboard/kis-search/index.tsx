@@ -100,6 +100,7 @@ export const KisSearchPage: React.FC = () => {
 
   /* ── Reset flat page on filter change ── */
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFlatPage(1);
   }, [filterVideoId, viewLimit]);
 
