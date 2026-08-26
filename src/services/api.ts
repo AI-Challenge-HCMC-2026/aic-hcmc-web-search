@@ -11,12 +11,14 @@ import { getBackendBaseUrl } from './settings';
  * `ngrok-skip-browser-warning: 69420` to bypass ngrok's interstitial page
  * and prevent CORS block issues when tunneling.
  */
-export async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+export async function apiFetch(input: string | URL | Request, init?: RequestInit): Promise<Response> {
   const headers = new Headers(init?.headers);
-  if (!headers.has('ngrok-skip-browser-warning')) {
-    headers.set('ngrok-skip-browser-warning', '69420');
-  }
-  if (!headers.has('Content-Type') && (init?.method === 'POST' || init?.method === 'PUT' || init?.method === 'PATCH')) {
+  
+  // ngrok bypass header to prevent HTML interstitial warning page
+  headers.set('ngrok-skip-browser-warning', '69420');
+
+  // Standard Content-Type header unless body is FormData
+  if (!headers.has('Content-Type') && !(init?.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
 
@@ -24,6 +26,45 @@ export async function apiFetch(input: string, init?: RequestInit): Promise<Respo
     ...init,
     headers,
   });
+}
+
+/**
+ * Universal API request wrapper with JSON deserialization, error handling,
+ * and automated ngrok header injection.
+ */
+export async function apiRequest<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const baseURL = getBackendBaseUrl();
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const url = endpoint.startsWith('http://') || endpoint.startsWith('https://')
+    ? endpoint
+    : `${baseURL}${cleanEndpoint}`;
+
+  const response = await apiFetch(url, options);
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+
+    let errorMessage = `API request failed with status ${response.status}`;
+    if (errorData) {
+      if (Array.isArray(errorData.detail)) {
+        // FastAPI 422 validation error array format: [{ loc: ['body', 'field_name'], msg: 'error msg' }]
+        errorMessage = errorData.detail
+          .map((d: { loc?: (string | number)[]; msg?: string }) => `${d.loc?.slice(1)?.join('.') || 'field'}: ${d.msg}`)
+          .join('; ');
+      } else if (typeof errorData.detail === 'string') {
+        errorMessage = errorData.detail;
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
 }
 
 /* ─── Shared Types ─── */
@@ -102,6 +143,69 @@ export interface VocabularyItem {
   class_entity: string;
 }
 
+/* ─── Video Vector Search Types ─── */
+
+export interface VideoVectorSearchItem {
+  video_id: string;
+  feature_id: number;
+  collection_name: string;
+  title: string | null;
+  video_path: string | null;
+  thumbnail_url: string | null;
+  author: string | null;
+  length_seconds: number | null;
+  segment_id: string;
+  segment_index: number;
+  file_name: string;
+  transcript_text: string;
+  similarity: number;
+}
+
+export interface VideoVectorSearchRequest {
+  query: string;
+  limit?: number;
+  offset?: number;
+  threshold?: number;
+}
+
+export interface VideoVectorSearchResponse {
+  total: number;
+  limit: number;
+  offset: number;
+  query: string;
+  items: VideoVectorSearchItem[];
+}
+
+/* ─── Keyframe Vector Search Types ─── */
+
+export interface KeyframeVectorSearchItem {
+  keyframe_id: number;
+  video_id: string;
+  keyframe_name: string;
+  frame_idx: number | null;
+  timestamp_sec: number | null;
+  image_path: string;
+  public_url: string | null;
+  similarity: number;
+}
+
+export interface KeyframeVectorSearchRequest {
+  query: string;
+  video_id?: string | null;
+  limit?: number;
+  offset?: number;
+  threshold?: number;
+}
+
+export interface KeyframeVectorSearchResponse {
+  video_id?: string | null;
+  total: number;
+  limit: number;
+  offset: number;
+  query: string;
+  items: KeyframeVectorSearchItem[];
+}
+
 /* ─── Full-Text Search Types ─── */
 
 export interface FullTextSearchItem {
@@ -178,13 +282,11 @@ export async function fetchCollectionTree(
   videoLimit?: number,
   signal?: AbortSignal,
 ): Promise<CollectionTreeNode[]> {
-  const baseUrl = getBackendBaseUrl();
   const params = new URLSearchParams();
   if (videoLimit !== undefined) params.set('video_limit', String(videoLimit));
+  const queryStr = params.toString() ? `?${params.toString()}` : '';
 
-  const res = await apiFetch(`${baseUrl}/tree?${params}`, { signal });
-  if (!res.ok) throw new Error(`Không thể tải thư viện dữ liệu (${res.status}).`);
-  return res.json();
+  return apiRequest<CollectionTreeNode[]>(`/tree${queryStr}`, { signal });
 }
 
 /**
@@ -196,11 +298,11 @@ export async function fetchVideoKeyframes(
   limit: number = 24,
   signal?: AbortSignal,
 ): Promise<PaginatedKeyframesResponse> {
-  const baseUrl = getBackendBaseUrl();
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-  const res = await apiFetch(`${baseUrl}/videos/${encodeURIComponent(videoId)}/keyframes?${params}`, { signal });
-  if (!res.ok) throw new Error(`Không thể tải keyframe (${res.status}).`);
-  return res.json();
+  return apiRequest<PaginatedKeyframesResponse>(
+    `/videos/${encodeURIComponent(videoId)}/keyframes?${params}`,
+    { signal },
+  );
 }
 
 /**
@@ -211,13 +313,13 @@ export async function fetchObjectVocabulary(
   limit: number = 50,
   signal?: AbortSignal,
 ): Promise<VocabularyItem[]> {
-  const baseUrl = getBackendBaseUrl();
   const params = new URLSearchParams({ limit: String(limit) });
   if (query) params.set('query', query);
 
-  const res = await apiFetch(`${baseUrl}/keyframes/objects/vocabulary?${params}`, { signal });
-  if (!res.ok) throw new Error(`Vocabulary request failed: ${res.status}`);
-  return res.json();
+  return apiRequest<VocabularyItem[]>(
+    `/keyframes/objects/vocabulary?${params}`,
+    { signal },
+  );
 }
 
 /**
@@ -227,18 +329,14 @@ export async function searchByObjects(
   body: MultiObjectSearchRequest,
   signal?: AbortSignal,
 ): Promise<MultiObjectSearchResponse> {
-  const baseUrl = getBackendBaseUrl();
-  const res = await apiFetch(`${baseUrl}/keyframes/search-by-objects`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(text || `Object search request failed: ${res.status}`);
-  }
-  return res.json();
+  return apiRequest<MultiObjectSearchResponse>(
+    '/keyframes/search-by-objects',
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+      signal,
+    },
+  );
 }
 
 /**
@@ -249,18 +347,14 @@ export async function searchFullText(
   body: FullTextSearchRequest,
   signal?: AbortSignal,
 ): Promise<FullTextSearchResponse> {
-  const baseUrl = getBackendBaseUrl();
-  const res = await apiFetch(`${baseUrl}/search/full-text-search`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(text || `Full-text search request failed: ${res.status}`);
-  }
-  return res.json();
+  return apiRequest<FullTextSearchResponse>(
+    '/search/full-text-search',
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+      signal,
+    },
+  );
 }
 
 /**
@@ -270,16 +364,47 @@ export async function searchKisVerification(
   body: KISSearchRequest,
   signal?: AbortSignal,
 ): Promise<KISSearchResponse> {
-  const baseUrl = getBackendBaseUrl();
-  const res = await apiFetch(`${baseUrl}/search/kis-search`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(text || `KIS verification request failed: ${res.status}`);
-  }
-  return res.json();
+  return apiRequest<KISSearchResponse>(
+    '/search/kis-search',
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+      signal,
+    },
+  );
 }
+
+/**
+ * Global Video Transcript Vector Search via Ollama Embeddings.
+ */
+export async function searchVideoVector(
+  body: VideoVectorSearchRequest,
+  signal?: AbortSignal,
+): Promise<VideoVectorSearchResponse> {
+  return apiRequest<VideoVectorSearchResponse>(
+    '/search/video/vector-search',
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+      signal,
+    },
+  );
+}
+
+/**
+ * Scoped Keyframe Vector Similarity Search via CLIP ViT-B/32.
+ */
+export async function searchKeyframeVector(
+  body: KeyframeVectorSearchRequest,
+  signal?: AbortSignal,
+): Promise<KeyframeVectorSearchResponse> {
+  return apiRequest<KeyframeVectorSearchResponse>(
+    '/search/keyframe/vector-search',
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+      signal,
+    },
+  );
+}
+
