@@ -129,6 +129,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
   ];
 
+  const submissionNavItems: NavItem[] = [
+    {
+      id: 'submission-kis',
+      label: 'KIS Search',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="22" y1="12" x2="18" y2="12" />
+          <line x1="6" y1="12" x2="2" y2="12" />
+          <line x1="12" y1="6" x2="12" y2="2" />
+          <line x1="12" y1="22" x2="12" y2="18" />
+        </svg>
+      ),
+    },
+    {
+      id: 'submission-trake',
+      label: 'TRAKE Search',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" />
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+        </svg>
+      ),
+    },
+    {
+      id: 'submission-vqa',
+      label: 'VQA Search',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+      ),
+    },
+  ];
+
   // Recent activity items for the history section
   const recentHistory = [
     'Deploy staging pipeline',
@@ -294,6 +331,57 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
         <nav aria-label="Search tools" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           {searchNavItems.map((item) => {
+            const isActive = activeTab === item.id;
+            const isHovered = hoveredNav === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onSelectTab(item.id)}
+                onMouseEnter={() => setHoveredNav(item.id)}
+                onMouseLeave={() => setHoveredNav(null)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: isActive ? 'var(--bg-surface-elevated)' : isHovered ? 'var(--bg-surface-subtle)' : 'transparent',
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  fontWeight: isActive ? 500 : 400,
+                  fontSize: '13.5px',
+                  fontFamily: 'var(--font-sans)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', color: isActive ? 'var(--accent-terracotta)' : 'var(--text-tertiary)' }}>
+                  {item.icon}
+                </span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* ─── Submission Tools ─── */}
+      <div style={{ padding: '14px 10px 8px' }}>
+        <div style={{
+          fontSize: '11px',
+          fontWeight: 600,
+          color: 'var(--text-tertiary)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          padding: '0 12px 8px',
+        }}>
+          Submission
+        </div>
+        <nav aria-label="Submission tools" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          {submissionNavItems.map((item) => {
             const isActive = activeTab === item.id;
             const isHovered = hoveredNav === item.id;
             return (

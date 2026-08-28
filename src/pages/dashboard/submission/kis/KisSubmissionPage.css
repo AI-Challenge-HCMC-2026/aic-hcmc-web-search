@@ -1,0 +1,611 @@
+/* ==========================================================================
+   KIS Submission Management Styling — Claude Design Tokens
+   ========================================================================== */
+
+.kis-sub-container {
+  height: 100%;
+  min-height: 0;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 36px 28px 60px;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.kis-sub-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kis-sub-heading-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kis-sub-sparkle {
+  color: var(--accent-terracotta);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.kis-sub-title {
+  color: var(--text-primary);
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+
+.kis-sub-subtitle {
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+/* ─── Summary Bar ─── */
+.kis-sub-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.kis-sub-summary strong {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.kis-sub-summary-divider {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+/* ─── Workspace Layout ─── */
+.kis-sub-workspace {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+  margin-top: 20px;
+  align-items: stretch;
+}
+
+/* ─── Panels ─── */
+.kis-sub-panel {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+/* ─── Left Panel: Query List ─── */
+.kis-sub-left-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface-elevated);
+}
+
+.kis-sub-left-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.kis-sub-left-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.kis-sub-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kis-sub-search-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  height: 34px;
+  color: var(--text-muted);
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.kis-sub-icon-button {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.kis-sub-icon-button:hover:not(:disabled) {
+  color: var(--accent-terracotta);
+  background: var(--bg-surface-elevated);
+  border-color: var(--border-focus);
+}
+
+.kis-sub-icon-button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.kis-sub-search-box:focus-within {
+  color: var(--accent-terracotta);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-terracotta-subtle);
+}
+
+.kis-sub-search-box input {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary);
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font: 12.5px var(--font-sans);
+}
+
+.kis-sub-search-box input::placeholder {
+  color: var(--text-muted);
+}
+
+.kis-sub-query-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-surface-active) transparent;
+}
+
+.kis-sub-query-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.kis-sub-query-card:hover {
+  background: var(--bg-surface-elevated);
+  border-color: var(--border-default);
+}
+
+.kis-sub-query-card.is-active {
+  background: var(--bg-surface-elevated);
+  border-color: var(--accent-terracotta);
+  box-shadow: 0 0 0 1px var(--accent-terracotta);
+}
+
+.kis-sub-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kis-sub-code-badge {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-surface-active);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+}
+
+.kis-sub-card-status {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+}
+
+.kis-sub-card-status.has-results {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.kis-sub-card-status.no-results {
+  background: var(--bg-surface-subtle);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.kis-sub-card-text {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kis-sub-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding-top: 4px;
+}
+
+.kis-sub-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.kis-sub-author-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kis-sub-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.kis-sub-delete-btn:hover {
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* ─── Right Panel: Query Detail & Results ─── */
+.kis-sub-detail-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-surface-active) transparent;
+}
+
+/* ─── Query Overview Box ─── */
+.kis-sub-overview-box {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kis-sub-overview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kis-sub-overview-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kis-sub-overview-code {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent-terracotta);
+}
+
+.kis-sub-overview-text {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  background: var(--bg-surface-subtle);
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-sans);
+}
+
+/* ─── Import Section Card ─── */
+.kis-sub-import-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.kis-sub-import-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kis-sub-import-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kis-sub-textarea {
+  width: 100%;
+  min-height: 120px;
+  max-height: 260px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kis-sub-textarea:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-terracotta-subtle);
+}
+
+.kis-sub-import-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.kis-sub-validator-badge {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kis-sub-validator-badge.valid {
+  color: var(--success);
+}
+
+.kis-sub-validator-badge.invalid {
+  color: var(--accent-terracotta);
+}
+
+/* ─── Results Table Section ─── */
+.kis-sub-results-section {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.kis-sub-results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.kis-sub-results-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kis-sub-results-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kis-sub-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sidebar);
+}
+
+.kis-sub-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.kis-sub-table th {
+  background: var(--bg-surface-subtle);
+  color: var(--text-tertiary);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.kis-sub-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.kis-sub-table tr:last-child td {
+  border-bottom: none;
+}
+
+.kis-sub-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-primary);
+}
+
+.kis-sub-rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-surface-active);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.kis-sub-video-cell {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--accent-terracotta);
+}
+
+.kis-sub-frame-cell {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+/* ─── Empty States ─── */
+.kis-sub-empty-state {
+  display: flex;
+  flex: 1;
+  min-height: 240px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 20px;
+  text-align: center;
+}
+
+.kis-sub-empty-icon {
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  color: var(--accent-terracotta);
+  background: var(--accent-terracotta-subtle);
+  border-radius: var(--radius-md);
+  font-size: 24px;
+}
+
+.kis-sub-empty-state h3 {
+  color: var(--text-primary);
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.kis-sub-empty-state p {
+  max-width: 420px;
+  margin-top: 8px;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* ─── Responsive Adjustments ─── */
+@media (max-width: 960px) {
+  .kis-sub-workspace {
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .kis-sub-container {
+    height: auto;
+    min-height: 100%;
+    padding: 24px 16px 48px;
+    overflow: visible;
+  }
+  .kis-sub-workspace {
+    display: flex;
+    flex-direction: column;
+  }
+  .kis-sub-panel {
+    width: 100%;
+    height: auto;
+    min-height: 380px;
+  }
+}
