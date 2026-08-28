@@ -11,6 +11,8 @@ import VideoSearchPage from './pages/dashboard/video-search';
 import KeyframeSearchPage from './pages/dashboard/keyframe-search';
 import KisSearchPage from './pages/dashboard/kis-search';
 import ObjectsSearchPage from './pages/dashboard/objects-search';
+import KisSubmissionPage from './pages/dashboard/submission/kis/KisSubmissionPage';
+import SubmissionPlaceholderPage from './pages/dashboard/submission/SubmissionPlaceholderPage';
 
 type DashboardTab =
   | 'chats'
@@ -21,7 +23,10 @@ type DashboardTab =
   | 'video-search'
   | 'keyframe-search'
   | 'kis-search'
-  | 'objects-search';
+  | 'objects-search'
+  | 'submission-kis'
+  | 'submission-trake'
+  | 'submission-vqa';
 
 const dashboardTabs: DashboardTab[] = [
   'chats',
@@ -33,6 +38,9 @@ const dashboardTabs: DashboardTab[] = [
   'keyframe-search',
   'kis-search',
   'objects-search',
+  'submission-kis',
+  'submission-trake',
+  'submission-vqa',
 ];
 
 const isDashboardTab = (value: string): value is DashboardTab =>
@@ -181,6 +189,19 @@ const AppContent: React.FC = () => {
       {activeTab === 'keyframe-search' && <KeyframeSearchPage />}
       {activeTab === 'kis-search' && <KisSearchPage />}
       {activeTab === 'objects-search' && <ObjectsSearchPage />}
+      {activeTab === 'submission-kis' && <KisSubmissionPage />}
+      {activeTab === 'submission-trake' && (
+        <SubmissionPlaceholderPage
+          title="TRAKE Submission Search"
+          description="Hệ thống nộp bài và đánh giá tác vụ TRAKE Search."
+        />
+      )}
+      {activeTab === 'submission-vqa' && (
+        <SubmissionPlaceholderPage
+          title="VQA Submission Search"
+          description="Hệ thống chấm điểm và nộp bài cho Visual Question Answering (VQA)."
+        />
+      )}
     </DashboardLayout>
   );
 };

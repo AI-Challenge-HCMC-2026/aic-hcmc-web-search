@@ -36,8 +36,14 @@ export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const baseURL = getBackendBaseUrl();
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const baseURL = getBackendBaseUrl().replace(/\/+$/, '');
+  let cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+  // Prevent duplicate /api/v1 if both baseURL and endpoint supply it
+  if (baseURL.endsWith('/api/v1') && cleanEndpoint.startsWith('/api/v1/')) {
+    cleanEndpoint = cleanEndpoint.replace(/^\/api\/v1/, '');
+  }
+
   const url = endpoint.startsWith('http://') || endpoint.startsWith('https://')
     ? endpoint
     : `${baseURL}${cleanEndpoint}`;
